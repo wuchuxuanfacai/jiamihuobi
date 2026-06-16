@@ -1,0 +1,66 @@
+name: btc-v40-adaptive-trend-signal
+display_name: "BTC V40 Adaptive Trend Signal"
+version: "0.1.0"
+description: "BTC contract signal adapted from the V40 trend and bear-floor research model"
+long_description: |
+  This Playbook is an adaptive BTC perpetual futures signal that captures sustained directional regimes while staying small when the market is unclear. Its thesis comes from a research model that combined trend participation with a defensive bear-market floor: when price structure confirms a durable upside regime it can express a long view, and when the same structure turns broadly bearish it can express a controlled short view. The public version is deliberately simplified so it can run inside the managed sandbox using replayable market data rather than private local databases.
+
+  Entry decisions are based on price action, trend alignment, momentum persistence, and recent realized volatility. The strategy opens long when the broader structure shows aligned upside participation and avoids fighting a dominant trend. It opens short when the structure shows persistent weakness across several trend checks and the market has not recovered enough to invalidate the defensive regime. When neither side has enough confirmation, it emits a hold signal instead of forcing a trade.
+
+  Exits work by loss of confirmation. A long signal closes when upside alignment fades, momentum cools, or the market falls back into a neutral or defensive structure. A short signal closes when bearish alignment fades, the market recovers into a healthier structure, or volatility-adjusted sizing would no longer justify exposure. The Playbook does not promise fixed take profit or stop loss levels; its primary protection is regime withdrawal, conservative sizing, and avoiding overtrading in unclear conditions.
+
+  Subscribers can tune leverage, margin budget, and signal aggressiveness. Higher leverage amplifies both upside and drawdown without making the model more selective. Margin budget controls the capital base used for strategy sizing and performance interpretation. Raising aggressiveness makes the model more willing to act on early regime evidence; lowering it makes signals more selective, typically reducing trade frequency and exposure.
+
+  The main risk is regime misclassification. The strategy can underperform in sharp V-shaped reversals, news-driven gaps, choppy ranges, and markets where price briefly satisfies trend conditions before reversing. It can also lose money when a defensive short floor remains active during a relief rally. Historical research evidence is useful context, but it is not a guarantee of live profitability, and subscribers should expect drawdown, slippage, and unsuitable market periods.
+market_type: contract
+trading_symbols: ["BTCUSDT"]
+tags: ["btc", "contract", "trend", "adaptive", "v40"]
+schedule:
+  cron: "10 0 * * *"
+  tz: "Asia/Shanghai"
+decision_mode: deterministic
+backtest_support: none
+runtime_profile: deterministic
+execution_mode: signal_only
+follow_trade_supported: false
+
+strategy_config:
+  trading_symbols: ["BTCUSDT"]
+  leverage: 3
+  margin_budget: "100"
+  aggressiveness: 1.0
+  max_signal_weight: 0.05
+
+user_config_schema:
+  trading_symbols:
+    type: array
+    item_type: string
+    default: ["BTCUSDT"]
+    options: ["BTCUSDT"]
+    aliases:
+      btc: BTCUSDT
+      bitcoin: BTCUSDT
+    min_items: 1
+    max_items: 1
+    label: "Trading symbol"
+  leverage:
+    type: integer
+    default: 3
+    min: 1
+    max: 10
+    aliases:
+      3x: 3
+      5x: 5
+      10x: 10
+    label: "Leverage"
+  margin_budget:
+    type: string
+    default: "100"
+    pattern: "^[0-9]+(\\.[0-9]+)?$"
+    label: "Margin budget USDT"
+  aggressiveness:
+    type: number
+    default: 1.0
+    min: 0.5
+    max: 1.5
+    label: "Signal aggressiveness"
