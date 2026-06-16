@@ -30,9 +30,11 @@ the move, price recovers into the broader trend reference, or
 volatility-adjusted sizing no longer supports exposure. A long signal closes
 when upside confirmation disappears.
 
-This is a signal-only package. It does not place fixed take-profit or stop-loss
-orders on the exchange. Risk control comes from regime withdrawal,
-volatility-aware sizing, and hard caps on target exposure.
+This package emits signals and also includes a simplified deterministic
+historical replay path for GetAgent Cloud validation. It does not place fixed
+take-profit or stop-loss orders on the exchange in signal mode. Risk control
+comes from regime withdrawal, volatility-aware sizing, and hard caps on target
+exposure.
 
 ## Parameters 参数
 
@@ -60,9 +62,10 @@ Local result for selected candidate `source_rank=1`, `weight_scale=1.40`:
 - locked_test: annual return about 88.38%, total return about 25.52%, max drawdown about -3.01%, Sharpe about 3.75
 - train: annual return about 0.54%, max drawdown about -7.89%
 
-These are local research results with a 6 bps turnover cost assumption. They
-are not official GetAgent platform backtest evidence. The uploaded package
-therefore remains `backtest_support: none`.
+These are local research results with a 6 bps turnover cost assumption. The
+GetAgent package also contains a Cloud backtest path under `backtest_support:
+full`; Cloud results may differ because they use the platform K-line provider,
+the shorter platform replay window, and Nautilus execution assumptions.
 
 ## Risk 风险
 

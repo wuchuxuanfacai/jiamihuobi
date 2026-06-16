@@ -6,7 +6,8 @@ trend floor, rebound filtering, and capped exposure.
 
 ## What Is Included
 
-- `getagent_playbook/` is the GetAgent signal package.
+- `getagent_playbook/` is the GetAgent package with signal output and a
+  deterministic Cloud backtest path.
 - `research_snapshot/` contains the frozen candidate-selection evidence.
 - `scripts/reproduce_metrics.py` reloads the frozen snapshot and verifies that
   the selected row passes the target checks.
@@ -21,9 +22,9 @@ uses recent realized volatility to size the short floor, and caps target
 exposure. A small optional long path remains in the uploaded code for recovery
 regimes, but the selected default is defensive and short-led.
 
-The GetAgent package is signal-only and uses sandbox-replayable intraday futures
-bars. The frozen research snapshot was exported from a local optimization run.
-The private raw market database is intentionally not part of this public repo.
+The GetAgent package uses sandbox-replayable intraday futures bars. The frozen
+research snapshot was exported from a local optimization run. The private raw
+market database is intentionally not part of this public repo.
 
 ## Reproduce The Frozen Metrics
 
@@ -62,13 +63,15 @@ meet the target.
 
 ```text
 name: btc-adaptive-short-trend-signal
-backtest_support: none
+backtest_support: full
 execution_mode: signal_only
 ```
 
-It is marked `backtest_support: none` because the optimization evidence comes
-from local research data rather than an official GetAgent platform backtest. The
-uploaded logic itself does not import local files or direct exchange clients.
+The package includes `backtest.yaml` and a Nautilus strategy class so GetAgent
+Cloud can run historical validation. Cloud results may differ from the frozen
+research snapshot because they use platform K-lines and the platform replay
+window. The uploaded logic does not import local files or direct exchange
+clients.
 
 ## Files
 
@@ -76,8 +79,10 @@ uploaded logic itself does not import local files or direct exchange clients.
 getagent_playbook/
   README.md
   manifest.yaml
+  backtest.yaml
   src/main.py
   src/features.py
+  src/strategy.py
 
 research_snapshot/
   selected_candidate_grid.csv

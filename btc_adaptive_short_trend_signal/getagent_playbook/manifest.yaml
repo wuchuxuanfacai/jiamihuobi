@@ -19,7 +19,7 @@ schedule:
   cron: "10 */4 * * *"
   tz: "Asia/Shanghai"
 decision_mode: deterministic
-backtest_support: none
+backtest_support: full
 runtime_profile: deterministic
 execution_mode: signal_only
 follow_trade_supported: false
@@ -29,7 +29,7 @@ strategy_config:
   leverage: 3
   margin_budget: "100"
   timeframe: "4h"
-  history_days: 180
+  history_days: 90
   aggressiveness: 1.0
   weight_scale: 1.4
   fast_trend_days: 3
@@ -58,6 +58,7 @@ strategy_config:
   max_long_weight: 0.14
   vol_ceiling: 0.45
   vol_floor_min: 0.20
+  trade_size: "0.001"
 
 user_config_schema:
   trading_symbols:
