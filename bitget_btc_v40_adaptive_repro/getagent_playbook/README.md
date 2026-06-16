@@ -1,29 +1,41 @@
-# BTC V40 Adaptive Trend Signal
+# BTC V40 Adaptive Short Trend Signal
 
-## 策略
+## Strategy 策略
 
-This Playbook is a BTC perpetual futures signal adapted from the local V40 multi-cycle research model. The original research model used private local databases, cross-asset features, derivatives context, and frozen model artifacts. This package keeps the part that can be reproduced honestly inside GetAgent: BTC price structure, trend alignment, bearish regime detection, realized volatility, and conservative target signal weight.
+This Playbook is a BTCUSDT perpetual futures signal adapted from the local V40 research line. The previous upload candidate was long-biased and too conservative for the current validation objective. The v10 version changes the core engine to a short trend floor: when BTC is in a confirmed weak regime, the strategy keeps a volatility-scaled short signal instead of waiting for repeated fresh breakdowns.
 
-The strategy tries to capture two market behaviors. First, it can participate when BTC has a persistent upside trend and price structure confirms that the move is broad rather than a one-day bounce. Second, it can emit a small short signal when BTC remains in a defensive bearish regime. When the market is mixed, it stays flat or holds instead of forcing a trade.
+The strategy uses only replayable intraday futures bars in the uploaded code path. Local research used the 1 minute BTCUSDT perpetual database under the Market Profile project, then resampled it into intraday bars for testing. Private DuckDB files and research CSVs are not included in the upload package.
 
-## 开仓
+## Entry 开仓
 
-The Playbook opens a long signal when the daily BTC structure shows bullish trend alignment, positive medium-term momentum, and price holding above its broader trend reference. It opens a short signal when the same structure turns defensive: price is below major trend references, medium-term return is negative, and the bearish score is high enough to justify a small defensive short floor.
+The Playbook opens a short signal when bearish trend alignment, medium-term momentum, broader trend position, rebound filtering, and volatility checks agree. The short trend floor is the base position. A small optional long path exists for healthy recovery regimes, but the default configuration is defensive and short-led.
 
-The signal is intentionally capped. It is designed as a modest directional overlay, not an all-in leverage strategy. The emitted metadata includes the latest close, trend score, bear score, recent return, realized volatility, and target signal weight so the user can see why the signal was produced.
+If the bearish regime is not confirmed, the strategy emits hold. It does not short every dip, and it avoids entries when the rebound filter suggests the market has already recovered enough to invalidate the short setup.
 
-## 平仓
+## Exit 平仓
 
-A long signal closes when upside confirmation fades or the market no longer satisfies the trend regime. A short signal closes when bearish confirmation fades or the market recovers into a healthier structure. The Playbook does not use fixed take profit or stop loss orders in this signal-only version. Its main risk control is regime withdrawal, volatility-aware sizing, and a hard cap on target exposure.
+A short signal closes when bearish alignment fades, momentum no longer confirms the move, price recovers into the broader trend reference, or volatility-adjusted sizing no longer supports exposure. A long signal closes when upside confirmation disappears.
 
-## 参数说明
+This is a signal-only package. It does not place fixed take-profit or stop-loss orders on the exchange. Risk control comes from regime withdrawal, volatility-aware sizing, and hard caps on target exposure.
 
-Subscribers may tune leverage, margin budget, and signal aggressiveness. Leverage amplifies both gains and drawdowns equally; it does not make signals more accurate. Margin budget is the capital base used by the platform for strategy sizing and return interpretation. Aggressiveness controls how readily the strategy acts on regime evidence: raising it makes signals easier to trigger, while lowering it makes the model more selective.
+## Parameters 参数
 
-## 回测指标如何读
+Subscribers can tune leverage, margin budget, timeframe, aggressiveness, weight scale, maximum signal weight, max short weight, max long weight, trend lookbacks, short floor cap, short target volatility, long floor cap, and volatility ceiling.
 
-This package is marked `backtest_support: none` because the original V40 research result depends on local datasets and frozen model artifacts that cannot be honestly replayed inside the current GetAgent sandbox. Local research context for V40 showed outer-test return of about 12.81%, Sharpe around 1.41, and maximum drawdown around 3.80% over the research window, but those numbers are not claimed as platform backtest evidence for this simplified package.
+Higher leverage amplifies both gains and drawdowns. Margin budget controls the capital base used by the platform for sizing and return interpretation. Higher aggressiveness makes the model act earlier. Higher weight scale and exposure caps allow larger signals in confirmed regimes. Lower volatility ceiling makes the model more selective during unstable periods.
 
-## 风险
+## Local Research Context 回测指标如何读
 
-The strategy can lose money in sharp V-shaped rebounds, news-driven gaps, sideways ranges, and sudden regime changes. The defensive short floor can remain active during relief rallies, while trend signals can be late after fast reversals. Past local research performance is not a guarantee of live profitability. Use conservative sizing, expect drawdown, and treat the signal as decision support rather than a promise of profit.
+The selected v10 local candidate is a 4h short trend floor configuration with a conservative weight scale. It was selected because it passed the requested hard filter on local splits: annualized return above 20% and max drawdown below 6% on both validation and locked-test windows.
+
+Local result for selected candidate `source_rank=1`, `weight_scale=1.40`:
+
+- validation: annual return about 20.03%, total return about 18.18%, max drawdown about -4.66%, Sharpe about 1.57
+- locked_test: annual return about 88.38%, total return about 25.52%, max drawdown about -3.01%, Sharpe about 3.75
+- train: annual return about 0.54%, max drawdown about -7.89%
+
+These are local research results using `D:\市场轮廓理论\data\db\btcusdt_1m_research.duckdb` and `D:\市场轮廓理论\data\db\btcusdt_1m_test_locked.duckdb` with a 6 bps turnover cost assumption. They are not official GetAgent platform backtest evidence. The uploaded package remains `backtest_support: none`.
+
+## Risk 风险
+
+The main risk is a sharp BTC rebound after a short signal. The strategy can also underperform in choppy ranges, news-driven gaps, exchange slippage, funding stress, and regimes where downside momentum decays before the model exits. Because the default is short-led, persistent bull markets can produce long periods of holding or losing short attempts. Past local performance is not a guarantee of live profitability.

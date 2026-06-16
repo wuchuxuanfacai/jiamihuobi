@@ -3,7 +3,7 @@ from typing import Any
 
 from getagent import runtime
 
-from .features import build_decision, load_daily_bars
+from .features import build_decision, load_intraday_bars
 
 
 def _clean(value: Any) -> Any:
@@ -16,12 +16,21 @@ def _clean_mapping(values: dict[str, Any]) -> dict[str, Any]:
     return {key: _clean(value) for key, value in values.items()}
 
 
+def _as_int(value: Any, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def run() -> None:
     config = runtime.manifest.get("strategy_config", {}) or {}
     symbols = config.get("trading_symbols") or runtime.manifest.get("trading_symbols", ["BTCUSDT"])
     symbol = symbols[0]
 
-    frame = load_daily_bars(symbol=symbol, days=90)
+    timeframe = str(config.get("timeframe") or "4h")
+    history_days = max(30, min(_as_int(config.get("history_days"), 180), 365))
+    frame = load_intraday_bars(symbol=symbol, interval=timeframe, days=history_days)
     decision = build_decision(frame, config)
 
     runtime.emit_signal(

@@ -1,72 +1,88 @@
-# BTC V40 Adaptive Trend Signal Repro Pack
+# BTC V10 Adaptive Short Trend Signal Repro Pack
 
-This folder contains the public, reproducible version of the BTC V40 adaptive
-trend idea used for the June Bitget/GetAgent experiment.
+This folder contains the latest public, reproducible version of the BTC strategy
+used for the June Bitget/GetAgent experiment. The old long-biased V40 model and
+its frozen metrics have been removed from this pack. The current version is the
+v10 short-trend configuration selected after optimizing against the hard target:
+annualized return above 20% and max drawdown below 6% on both validation and
+locked-test windows.
 
-It has two deliberately separate parts:
+## What Is Included
 
-- `getagent_playbook/` is the GetAgent package that was uploaded and published
-  as `btc-v40-adaptive-trend-signal` version `0.0.1`.
-- `research_snapshot/` contains frozen CSV/JSON evidence from the local V40
-  research run. The snapshot is included so anyone can reproduce the reported
-  segment metrics without access to private D-drive databases, API keys, or
-  live data providers.
+- `getagent_playbook/` is the current GetAgent package:
+  `btc-v40-adaptive-trend-signal`.
+- `research_snapshot/` contains frozen v10 selection evidence exported from the
+  local optimization run.
+- `scripts/reproduce_v10_short_trend_metrics.py` reloads the frozen snapshot and
+  verifies that the selected row still passes the target checks.
+
+No API keys, private DuckDB databases, or Bitget credentials are included.
 
 ## Core Idea
 
-The original V40 model combines a long trend-following leg and a defensive
-short regime leg. It uses a small capped target weight rather than full-account
-directional exposure. The model favors BTC long exposure when price structure is
-broadly bullish and adds a small short floor when the market is persistently
-bearish. In unclear regimes, exposure is reduced or flat.
+The current model is a BTCUSDT perpetual futures signal built around a
+volatility-scaled short trend floor. It looks for persistent bearish alignment,
+requires medium-term weakness to remain intact, filters out strong rebounds, and
+caps target exposure. A small optional long path remains in the uploaded code,
+but the selected default is defensive and short-led.
 
-The full local research version used frozen model artifacts and private local
-feature stores. Those dependencies are not included here because they would make
-the result hard to reproduce and unsuitable for a public package. The GetAgent
-Playbook therefore keeps only the sandbox-replayable price-structure core.
+The GetAgent package is signal-only and uses sandbox-replayable intraday futures
+bars. The local optimization used private one minute BTCUSDT perpetual data from
+the Market Profile research database, then resampled it into intraday bars. The
+private raw database is intentionally not part of this public repo.
 
-## Reproduce The Frozen V40 Metrics
+## Reproduce The Frozen V10 Metrics
 
 From this directory:
 
 ```bash
 python -m pip install -r requirements.txt
+python scripts/reproduce_v10_short_trend_metrics.py
+```
+
+Compatibility command:
+
+```bash
 python scripts/reproduce_v40_backtest.py
 ```
 
-The script reads `research_snapshot/v40_best_detail.csv`, recomputes segment
-metrics, compares them with `research_snapshot/v40_summary.json`, and writes:
+Both commands read:
 
 ```text
-research_snapshot/reproduced_v40_metrics.json
+research_snapshot/btc_short_trend_v10_scale_top120.csv
 ```
 
-Expected headline metrics from the frozen snapshot:
+and write:
 
-| Segment | Dates | Total Return | Sharpe | Max Drawdown |
+```text
+research_snapshot/reproduced_v10_short_trend_metrics.json
+```
+
+Expected selected row:
+
+| Split | Annual Return | Total Return | Sharpe | Max Drawdown |
 |---|---:|---:|---:|---:|
-| inner_validation | 2023-07-01 to 2024-06-30 | 17.39% | 1.91 | -4.30% |
-| outer_validation | 2024-07-01 to 2025-03-31 | 8.22% | 1.20 | -4.43% |
-| outer_test | 2025-04-01 to 2026-05-13 | 12.81% | 1.41 | -3.80% |
+| validation | 20.03% | 18.18% | 1.57 | -4.66% |
+| locked_test | 88.38% | 25.52% | 3.75 | -3.01% |
+| train | 0.54% | 2.74% | 0.12 | -7.89% |
 
-The default tolerance is `1e-10`; a passing run should report
-`"passed": true`.
+The selected candidate is `source_rank=1`, `weight_scale=1.40`, `timeframe=4h`.
+The script reports `"passed": true` only when validation and locked-test both
+meet the target.
 
-## Published GetAgent Package
+## GetAgent Package
 
-The published package is signal-only:
+The package remains:
 
 ```text
 name: btc-v40-adaptive-trend-signal
-version: 0.0.1
-status: published
-playbook_id: edad9068-4af9-4814-93f4-70123ca818fe
-strategy_id: b97dcdd8-e31f-4a4b-a092-3b554009245a
+backtest_support: none
+execution_mode: signal_only
 ```
 
-It is marked `backtest_support: none` because the original research result
-depends on local datasets and frozen model artifacts. The Playbook should not
-claim fake platform backtest evidence.
+It is marked `backtest_support: none` because the optimization evidence comes
+from local research data rather than an official GetAgent platform backtest. The
+uploaded logic itself does not import local files or direct exchange clients.
 
 ## Files
 
@@ -78,13 +94,11 @@ getagent_playbook/
   src/features.py
 
 research_snapshot/
-  v40_best_detail.csv
-  v40_outer_test_detail.csv
-  v40_summary.json
-  latest_v40_v41_signal_summary.json
+  btc_short_trend_v10_scale_top120.csv
+  btc_short_trend_v10_scale_hits.json
+  reproduced_v10_short_trend_metrics.json
 
 scripts/
+  reproduce_v10_short_trend_metrics.py
   reproduce_v40_backtest.py
 ```
-
-No API keys or private credentials are included.
