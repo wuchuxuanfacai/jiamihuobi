@@ -29,7 +29,6 @@ def _run_historical(config: dict[str, Any], symbol: str) -> None:
         interval=str(config.get("timeframe") or "4h"),
         exchange="bitget",
         days=max(30, min(_as_int(config.get("history_days"), 90), 90)),
-        limit=1000,
     )
     replay_frame = backtest.prepare_frame(bars, datetime_index="date")
     if replay_frame.empty:

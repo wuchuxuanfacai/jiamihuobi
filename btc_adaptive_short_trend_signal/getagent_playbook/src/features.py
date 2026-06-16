@@ -36,7 +36,6 @@ def load_intraday_bars(symbol: str, interval: str = "4h", days: int = 180) -> pd
         interval=interval,
         exchange="bitget",
         days=days,
-        limit=1000,
     )
     frame = data.to_dataframe(bars)
     if frame.empty:
