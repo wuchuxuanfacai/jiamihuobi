@@ -191,7 +191,7 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
     meta = {
         "regime": regime,
         "timeframe": interval,
-        "source": "v10-4h-short-trend-floor",
+        "source": "btc-adaptive-short-trend-floor",
         "latest_bar_time": str(frame.index[-1]),
         "notes": "Signal-only BTC futures model. The default is a volatility-scaled short trend floor with rebound and trend-regime filters.",
     }

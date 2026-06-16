@@ -19,16 +19,16 @@ def _pct(value: float) -> str:
 
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
-    parser = argparse.ArgumentParser(description="Reproduce frozen BTC V10 short-trend headline metrics.")
+    parser = argparse.ArgumentParser(description="Reproduce frozen BTC adaptive short-trend headline metrics.")
     parser.add_argument(
         "--snapshot",
         type=Path,
-        default=root / "research_snapshot" / "btc_short_trend_v10_scale_top120.csv",
+        default=root / "research_snapshot" / "selected_candidate_grid.csv",
     )
     parser.add_argument(
         "--out",
         type=Path,
-        default=root / "research_snapshot" / "reproduced_v10_short_trend_metrics.json",
+        default=root / "research_snapshot" / "reproduced_metrics.json",
     )
     args = parser.parse_args()
 
@@ -38,7 +38,7 @@ def main() -> int:
         & ((rows["weight_scale"] - SELECTED_WEIGHT_SCALE).abs() < 1e-12)
     ]
     if selected.empty:
-        raise SystemExit("selected v10 row not found in snapshot")
+        raise SystemExit("selected row not found in snapshot")
     row = selected.iloc[0].to_dict()
     checks = {
         "validation_annual_return_ok": bool(row["validation_annual_return"] >= MIN_ANNUAL_RETURN),

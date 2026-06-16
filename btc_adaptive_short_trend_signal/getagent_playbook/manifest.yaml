@@ -1,5 +1,5 @@
-name: btc-v40-adaptive-trend-signal
-display_name: "BTC V40 Adaptive Short Trend Signal"
+name: btc-adaptive-short-trend-signal
+display_name: "BTC Adaptive Short Trend Signal"
 version: "0.1.0"
 description: "BTC contract signal using a volatility-scaled short trend floor with rebound filters"
 long_description: |
