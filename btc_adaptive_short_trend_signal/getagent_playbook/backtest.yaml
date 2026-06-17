@@ -16,6 +16,7 @@ strategy:
     leverage: 3
     min_trade_size: "0.001"
     target_step_weight: 0.02
+    max_effective_exposure: 0.80
     fast_window: 12
     mid_window: 42
     slow_window: 84

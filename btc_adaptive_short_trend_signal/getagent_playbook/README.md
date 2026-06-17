@@ -44,15 +44,17 @@ the backtest are target-position adjustments, not isolated fixed-size entries.
 ## Parameters
 
 Subscribers can tune leverage, margin budget, timeframe, aggressiveness,
-overall weight scale, maximum signal weight, maximum short weight, maximum long
-weight, trend lookbacks, short and long exposure caps, and volatility filters.
+overall weight scale, maximum signal weight, maximum effective exposure,
+maximum short weight, maximum long weight, trend lookbacks, short and long
+exposure caps, and volatility filters.
 
 Higher leverage amplifies both gains and drawdowns without making the signal
-more selective. Margin budget controls the capital base used by the platform
-for sizing and return interpretation. Higher aggressiveness makes the model act
-earlier; lower aggressiveness makes it wait for cleaner confirmation. Higher
-exposure caps permit larger positions in confirmed regimes, while lower caps
-make the strategy more defensive.
+more selective, while maximum effective exposure caps the final notional size
+after leverage is applied. Margin budget controls the capital base used by the
+platform for sizing and return interpretation. Higher aggressiveness makes the
+model act earlier; lower aggressiveness makes it wait for cleaner confirmation.
+Higher exposure caps permit larger positions in confirmed regimes, while lower
+caps make the strategy more defensive.
 
 ## Reading Returns
 
@@ -62,7 +64,8 @@ can show a much smaller percentage because that row is tied to the entry and
 exit price movement of a single round trip, not the full strategy equity curve.
 Very short price moves can display near zero percent while still producing
 negative net PnL after taker fees. The replay sizes contract quantity from the
-margin budget, leverage, target weight, current price, and exchange lot size.
+margin budget, leverage, target weight, current price, exchange lot size, and
+the maximum effective exposure guardrail.
 
 ## Costs And Slippage
 

@@ -28,6 +28,7 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     leverage: int = 3
     min_trade_size: str = "0.001"
     target_step_weight: float = 0.02
+    max_effective_exposure: float = 0.80
     fast_window: int = 12
     mid_window: int = 42
     slow_window: int = 84
@@ -182,8 +183,10 @@ class AdaptiveShortTrendStrategy(Strategy):
         max_weight = max(float(self.cfg.max_short_weight), float(self.cfg.max_long_weight), 0.0)
         budget = max(float(self.cfg.margin_budget), 0.0)
         leverage = max(float(self.cfg.leverage), 1.0)
+        max_effective_exposure = max(float(self.cfg.max_effective_exposure), 0.0)
         min_qty = float(self.cfg.min_trade_size)
-        max_qty = self._round_qty(max_weight * budget * leverage / max(price, 1e-9), min_qty)
+        max_notional_weight = min(max_weight * leverage, max_effective_exposure)
+        max_qty = self._round_qty(max_notional_weight * budget / max(price, 1e-9), min_qty)
         if max_qty <= 0.0:
             return 0.0
         return float(np.clip(target_qty, -max_qty, max_qty))
@@ -211,6 +214,7 @@ class AdaptiveShortTrendStrategy(Strategy):
             "leverage",
             "min_trade_size",
             "target_step_weight",
+            "max_effective_exposure",
             "fast_window",
             "mid_window",
             "slow_window",

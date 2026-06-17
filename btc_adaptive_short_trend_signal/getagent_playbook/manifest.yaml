@@ -32,6 +32,7 @@ strategy_config:
   history_days: 220
   aggressiveness: 1.0
   weight_scale: 1.43858
+  max_effective_exposure: 0.80
   fast_trend_days: 2
   mid_trend_days: 7
   slow_trend_days: 14
@@ -151,6 +152,12 @@ user_config_schema:
     min: 0.01
     max: 2.0
     label: "Max signal weight"
+  max_effective_exposure:
+    type: number
+    default: 0.80
+    min: 0.10
+    max: 3.0
+    label: "Max effective exposure"
   max_short_weight:
     type: number
     default: 1.71114
