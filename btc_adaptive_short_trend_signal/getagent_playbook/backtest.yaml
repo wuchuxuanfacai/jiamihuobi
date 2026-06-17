@@ -79,10 +79,10 @@ strategy:
     range_trend_max: 0.72880
     range_bear_max: 0.56401
     range_vol_ceiling: 0.59266
-    trade_start: "2026-03-03T00:00:00Z"
+    trade_start: "2025-03-01T00:00:00Z"
 
 execution:
-  start: "2025-11-01T00:00:00Z"
+  start: "2025-01-01T00:00:00Z"
   end: "2026-06-01T00:00:00Z"
 
 instrument:

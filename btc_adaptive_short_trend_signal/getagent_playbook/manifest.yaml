@@ -101,8 +101,8 @@ strategy_config:
   high_vol_short_conf: 0.00
   target_step_weight: 0.02
   min_trade_size: "0.001"
-  cloud_fetch_start: "2026-01-01T00:00:00Z"
-  cloud_trade_start: "2026-03-03T00:00:00Z"
+  cloud_fetch_start: "2025-01-01T00:00:00Z"
+  cloud_trade_start: "2025-03-01T00:00:00Z"
   cloud_fetch_end: "2026-06-01T00:00:00Z"
 
 user_config_schema:
