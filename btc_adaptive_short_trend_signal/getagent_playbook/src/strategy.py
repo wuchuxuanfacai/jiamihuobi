@@ -99,6 +99,7 @@ class AdaptiveShortTrendStrategy(Strategy):
         self.cfg = config
         self._closes: list[float] = []
         self._instrument: Optional[Instrument] = None
+        self._target_position_qty = 0.0
         self._trade_start_ns = self._parse_timestamp_ns(config.trade_start)
 
     def on_start(self) -> None:
@@ -128,7 +129,8 @@ class AdaptiveShortTrendStrategy(Strategy):
             return
         target_weight = compute_signal_state(values, self._config_dict(), bars_per_day=6.0).target_weight
         target_qty = self._target_qty(target_weight, latest)
-        current_qty = self._current_signed_qty(instrument.id)
+        target_qty = self._clip_target_qty(target_qty, latest)
+        current_qty = self._target_position_qty
         delta_qty = target_qty - current_qty
         min_qty = float(self.cfg.min_trade_size)
         if abs(delta_qty) < min_qty:
@@ -140,6 +142,7 @@ class AdaptiveShortTrendStrategy(Strategy):
         qty = Quantity(Decimal(str(rounded_delta)), instrument.size_precision)
         side = OrderSide.SELL if delta_qty < 0.0 else OrderSide.BUY
         self._submit(instrument.id, side, qty)
+        self._target_position_qty += -rounded_delta if side == OrderSide.SELL else rounded_delta
 
     def _submit(
         self,
@@ -165,6 +168,15 @@ class AdaptiveShortTrendStrategy(Strategy):
         if rounded < min_qty:
             return 0.0
         return rounded if target_weight > 0.0 else -rounded
+
+    def _clip_target_qty(self, target_qty: float, price: float) -> float:
+        max_weight = max(float(self.cfg.max_short_weight), float(self.cfg.max_long_weight), 0.0)
+        budget = max(float(self.cfg.margin_budget), 0.0)
+        min_qty = float(self.cfg.min_trade_size)
+        max_qty = self._round_qty(max_weight * budget / max(price, 1e-9), min_qty)
+        if max_qty <= 0.0:
+            return 0.0
+        return float(np.clip(target_qty, -max_qty, max_qty))
 
     @staticmethod
     def _round_qty(value: float, step: float) -> float:
