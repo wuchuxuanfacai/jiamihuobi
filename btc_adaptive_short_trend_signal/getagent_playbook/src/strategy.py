@@ -101,11 +101,17 @@ class AdaptiveShortTrendStrategy(Strategy):
             return
         qty = Quantity(Decimal(self.cfg.trade_size), instrument.size_precision)
 
-        if self._position == "NONE" and short_ok:
+        has_open_position = self._has_open_position(instrument.id)
+        if has_open_position and self._position == "NONE":
+            self._position = "SHORT"
+        elif not has_open_position and self._position == "SHORT":
+            self._position = "NONE"
+
+        if not has_open_position and short_ok:
             self._submit(instrument.id, OrderSide.SELL, qty)
             self._position = "SHORT"
-        elif self._position == "SHORT" and not short_ok:
-            self._close_open(instrument.id, OrderSide.BUY)
+        elif has_open_position and not short_ok:
+            self.close_all_positions(instrument.id)
             self._position = "NONE"
 
     def _submit(
@@ -122,9 +128,8 @@ class AdaptiveShortTrendStrategy(Strategy):
         )
         self.submit_order(order)
 
-    def _close_open(self, instrument_id: InstrumentId, side: OrderSide) -> None:
-        for position in self.cache.positions_open(instrument_id=instrument_id):
-            self._submit(instrument_id, side, position.quantity)
+    def _has_open_position(self, instrument_id: InstrumentId) -> bool:
+        return bool(list(self.cache.positions_open(instrument_id=instrument_id)))
 
     def on_stop(self) -> None:
         if self._instrument is not None:

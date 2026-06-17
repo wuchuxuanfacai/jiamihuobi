@@ -107,11 +107,11 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
     weight_scale = min(max(_as_float(config.get("weight_scale"), 1.4), 0.1), 2.0)
     max_signal_weight = min(max(_as_float(config.get("max_signal_weight"), 1.4), 0.01), 2.0)
     max_short_weight = min(max(_as_float(config.get("max_short_weight"), 1.4), 0.0), max_signal_weight)
-    max_long_weight = min(max(_as_float(config.get("max_long_weight"), 0.14), 0.0), max_signal_weight)
+    max_long_weight = 0.0
     short_cap = min(max(_as_float(config.get("short_floor_cap"), 1.0), 0.0), max_short_weight)
     short_target_vol = min(max(_as_float(config.get("short_target_vol"), 0.35), 0.01), 1.20)
     long_cap = min(max(_as_float(config.get("long_floor_cap"), 0.10), 0.0), max_long_weight)
-    long_target_vol = min(max(_as_float(config.get("long_target_vol"), 0.16), 0.0), 0.50)
+    long_target_vol = 0.0
     vol = max(_as_float(realized_vol.iloc[-1], 0.20), _as_float(config.get("vol_floor_min"), 0.20))
 
     latest_bear = _as_float(bear_strength.iloc[-1], 0.0)
@@ -135,14 +135,7 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
         and vol <= _as_float(config.get("vol_ceiling"), 9.0)
     )
     trend_threshold = _as_float(config.get("trend_on"), 0.68) / aggr
-    long_ok = (
-        max_long_weight > 0.0
-        and latest_trend >= trend_threshold
-        and latest_ret_slow > _as_float(config.get("ret_slow_min"), 0.0)
-        and latest_ret_mid > _as_float(config.get("ret_mid_min"), 0.0)
-        and last_close > latest_sma_long * _as_float(config.get("long_sma_mult"), 1.02)
-        and vol <= _as_float(config.get("vol_ceiling"), 9.0)
-    )
+    long_ok = False
 
     bear_conf = min(1.0, max(0.0, (latest_bear - bear_threshold) / max(1.0 - bear_threshold, 1e-9)))
     long_conf = min(1.0, max(0.0, (latest_trend - trend_threshold) / max(1.0 - trend_threshold, 1e-9)))
@@ -192,6 +185,6 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
         "timeframe": interval,
         "source": "btc-adaptive-short-trend-floor",
         "latest_bar_time": str(frame.index[-1]),
-        "notes": "Signal-only BTC futures model. The default is a volatility-scaled short trend floor with rebound and trend-regime filters.",
+        "notes": "BTC futures model with a hard short-only default: signals are short or hold, with no long entry path.",
     }
     return Decision(action=action, confidence=float(confidence), target_weight=raw_target, metrics=metrics, meta=meta)

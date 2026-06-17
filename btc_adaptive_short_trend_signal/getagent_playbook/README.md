@@ -15,9 +15,8 @@ not included in the upload package.
 
 The Playbook opens a short signal when bearish trend alignment, medium-term
 momentum, broader trend position, rebound filtering, and volatility checks
-agree. The short trend floor is the base position. A small optional long path
-exists for healthy recovery regimes, but the default configuration is defensive
-and short-led.
+agree. The short trend floor is the base position. Long entries are disabled
+by default, so the configuration is strictly short-or-flat.
 
 If the bearish regime is not confirmed, the strategy emits hold. It does not
 short every dip, and it avoids entries when the rebound filter suggests the
@@ -27,8 +26,8 @@ market has already recovered enough to invalidate the short setup.
 
 A short signal closes when bearish alignment fades, momentum no longer confirms
 the move, price recovers into the broader trend reference, or
-volatility-adjusted sizing no longer supports exposure. A long signal closes
-when upside confirmation disappears.
+volatility-adjusted sizing no longer supports exposure. There is no default
+long entry path.
 
 This package emits managed signals and includes a simplified deterministic
 historical replay path for GetAgent Cloud validation. It is compatible with
@@ -39,9 +38,8 @@ volatility-aware sizing, and hard caps on target exposure.
 ## Parameters 参数
 
 Subscribers can tune leverage, margin budget, timeframe, aggressiveness, weight
-scale, maximum signal weight, max short weight, max long weight, trend
-lookbacks, short floor cap, short target volatility, long floor cap, and
-volatility ceiling.
+scale, maximum signal weight, max short weight, trend lookbacks, short floor
+cap, short target volatility, and volatility ceiling.
 
 Higher leverage amplifies both gains and drawdowns. Margin budget controls the
 capital base used by the platform for sizing and return interpretation. Higher

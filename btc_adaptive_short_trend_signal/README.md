@@ -19,8 +19,8 @@ No API keys, private DuckDB databases, or Bitget credentials are included.
 The model looks for persistent bearish alignment in BTCUSDT perpetual futures.
 It requires medium-term weakness to remain intact, filters out strong rebounds,
 uses recent realized volatility to size the short floor, and caps target
-exposure. A small optional long path remains in the uploaded code for recovery
-regimes, but the selected default is defensive and short-led.
+exposure. The uploaded code now uses a hard short-or-flat posture, so the
+default strategy can only open short signals or hold.
 
 The GetAgent package uses sandbox-replayable intraday futures bars. The frozen
 research snapshot was exported from a local optimization run. The private raw
