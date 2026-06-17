@@ -100,6 +100,7 @@ def _effective_spec(config: dict[str, Any]) -> dict[str, Any]:
         "min_trade_size": str(config.get("min_trade_size") or strategy_config.get("min_trade_size") or "0.001"),
         "target_step_weight": _as_float(config.get("target_step_weight"), strategy_config.get("target_step_weight", 0.02)),
         "max_effective_exposure": _as_float(config.get("max_effective_exposure"), strategy_config.get("max_effective_exposure", 0.80)),
+        "min_rebalance_qty_pct": _as_float(config.get("min_rebalance_qty_pct"), strategy_config.get("min_rebalance_qty_pct", 0.25)),
         "fast_window": _rolling_days(config.get("fast_trend_days"), bars_per_day, 3),
         "mid_window": _rolling_days(config.get("mid_trend_days"), bars_per_day, 6),
         "slow_window": _rolling_days(config.get("slow_trend_days"), bars_per_day, 12),

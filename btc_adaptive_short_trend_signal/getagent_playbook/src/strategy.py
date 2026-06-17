@@ -29,6 +29,7 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     min_trade_size: str = "0.001"
     target_step_weight: float = 0.02
     max_effective_exposure: float = 0.80
+    min_rebalance_qty_pct: float = 0.25
     fast_window: int = 12
     mid_window: int = 42
     slow_window: int = 84
@@ -144,6 +145,8 @@ class AdaptiveShortTrendStrategy(Strategy):
         min_qty = float(self.cfg.min_trade_size)
         if abs(delta_qty) < min_qty:
             return
+        if current_qty and abs(delta_qty) < abs(current_qty) * float(self.cfg.min_rebalance_qty_pct):
+            return
 
         rounded_delta = self._round_qty(abs(delta_qty), min_qty)
         if rounded_delta < min_qty:
@@ -215,6 +218,7 @@ class AdaptiveShortTrendStrategy(Strategy):
             "min_trade_size",
             "target_step_weight",
             "max_effective_exposure",
+            "min_rebalance_qty_pct",
             "fast_window",
             "mid_window",
             "slow_window",

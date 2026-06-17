@@ -6,6 +6,9 @@ This Playbook trades BTCUSDT perpetual futures with one composite target
 position. The target is built from three sub-models: a trend-long model, a
 trend-short model, and a range mean-reversion model. Each sub-model produces a
 signed weight, then the final target is the clipped sum of those weights.
+The current default profile is deliberately low-turnover and trend-led: the
+short trend branch is the main risk-taking path, while long and range exposure
+are smaller auxiliary components.
 
 The uploaded package uses only replayable intraday futures OHLCV bars. It does
 not read local databases, API keys, private research files, direct exchange
@@ -40,6 +43,8 @@ away from the channel extreme or a clearer trend regime takes over.
 The Cloud replay fetches pre-roll history before the trade window so moving
 trend and volatility features are already formed when trading begins. Orders in
 the backtest are target-position adjustments, not isolated fixed-size entries.
+Small target changes are ignored unless they are large enough to justify a
+rebalance, reducing churn and fee drag in sideways periods.
 
 ## Parameters
 
