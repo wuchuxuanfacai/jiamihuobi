@@ -51,11 +51,7 @@ strategy_config:
   short_conf: 0.55
   max_short_weight: 1.71114
   max_signal_weight: 2.00
-  trend_on: 0.68
-  ret_slow_min: 0.0
-  ret_mid_min: 0.0
   long_sma_mult: 1.02
-  long_target_vol: 0.0
   long_floor_cap: 0.72963
   max_long_weight: 0.82879
   long_on: 0.52496

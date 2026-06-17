@@ -4,6 +4,6 @@ Public reproducible crypto strategy materials.
 
 Current package:
 
-- `btc_adaptive_short_trend_signal/` - BTC adaptive short-trend GetAgent signal package and frozen local research snapshot.
+- `btc_adaptive_short_trend_signal/` - BTC Adaptive Trend Range Signal GetAgent package and frozen local research snapshot.
 
-The BTC package is built around a volatility-scaled short trend floor, rebound filtering, and hard exposure caps. The frozen snapshot verifies the target checks used during selection: annualized return above 20% and max drawdown below 6% on both validation and locked-test windows.
+The BTC package is now a composite target-position strategy combining trend-long, trend-short, and range mean-reversion components. The frozen snapshot remains as local research evidence only; Cloud results should be read from GetAgent's official strategy card.
