@@ -32,44 +32,64 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     slow_window: int = 84
     long_window: int = 270
     vol_window: int = 60
-    bear_on: float = 0.3892
+    bear_on: float = 0.35635
     bear_off: float = 0.30
     ret_slow_max: float = -0.04
     ret_mid_max: float = 0.01
     short_sma_mult: float = 1.03
     mid_sma_mult: float = 1.0
-    rebound_ret_max: float = 0.0364
+    rebound_ret_max: float = 0.04942
     rebound_sma_mult: float = 1.005
-    short_target_vol: float = 1.0622
-    short_floor_cap: float = 1.8962
-    max_short_weight: float = 1.7936
+    short_target_vol: float = 1.16824
+    short_floor_cap: float = 1.45442
+    max_short_weight: float = 1.71114
     max_signal_weight: float = 2.00
     short_base: float = 0.65
     short_conf: float = 0.55
-    weight_scale: float = 1.3308
-    vol_ceiling: float = 0.3268
+    weight_scale: float = 1.43858
+    vol_ceiling: float = 0.34090
     vol_floor_min: float = 0.20
-    high_vol_floor: float = 0.4086
-    high_vol_ceiling: float = 0.6006
+    high_vol_floor: float = 0.40996
+    high_vol_ceiling: float = 0.54369
     high_vol_bear_on: float = 0.42
     high_vol_sma_mult: float = 1.02
     high_vol_target_vol: float = 0.50
     high_vol_short_cap: float = 1.0
     high_vol_short_base: float = 0.65
     high_vol_short_conf: float = 0.0
-    long_on: float = 0.4532
-    long_ret_mid_min: float = -0.0072
+    long_on: float = 0.52496
+    long_ret_mid_min: float = 0.00710
     long_sma_mult: float = 1.0
-    long_vol_ceiling: float = 0.5325
-    long_floor_cap: float = 0.4790
-    max_long_weight: float = 0.6368
-    dynamic_long_cap: float = 0.6266
-    dynamic_short_cap: float = 0.1395
-    range_mr_cap: float = 0.2155
-    range_z_entry: float = 0.8910
-    range_trend_max: float = 0.6447
-    range_bear_max: float = 0.5977
-    range_vol_ceiling: float = 0.6684
+    long_vol_ceiling: float = 0.60752
+    long_floor_cap: float = 0.72963
+    max_long_weight: float = 0.82879
+    dynamic_long_cap: float = 0.15126
+    dynamic_short_cap: float = 0.11467
+    dynamic_long_trend_on: float = 0.59954
+    dynamic_long_sma_mult: float = 0.99679
+    dynamic_long_vol_ceiling: float = 0.68010
+    long_accel_ret_min: float = 0.02445
+    long_pullback_z: float = -0.37573
+    long_pullback_ret_mid_min: float = -0.02667
+    long_pullback_slow_mult: float = 0.97249
+    dynamic_long_target_vol: float = 0.38522
+    dynamic_long_base: float = 0.21780
+    dynamic_long_conf: float = 0.30226
+    dynamic_short_bear_on: float = 0.62661
+    short_accel_ret_max: float = -0.00817
+    short_rebound_z: float = 1.07511
+    dynamic_short_sma_mult: float = 0.99830
+    dynamic_short_target_vol: float = 0.51004
+    dynamic_short_base: float = 0.17381
+    dynamic_short_conf: float = 0.26965
+    channel_slope_deadband: float = 0.00313
+    range_bias_strength: float = 0.54640
+    channel_slope_window: int = 45
+    range_mr_cap: float = 0.04855
+    range_z_entry: float = 0.65902
+    range_trend_max: float = 0.72880
+    range_bear_max: float = 0.56401
+    range_vol_ceiling: float = 0.59266
     trade_start: str = ""
 
 
@@ -206,6 +226,26 @@ class AdaptiveShortTrendStrategy(Strategy):
             "max_long_weight",
             "dynamic_long_cap",
             "dynamic_short_cap",
+            "dynamic_long_trend_on",
+            "dynamic_long_sma_mult",
+            "dynamic_long_vol_ceiling",
+            "long_accel_ret_min",
+            "long_pullback_z",
+            "long_pullback_ret_mid_min",
+            "long_pullback_slow_mult",
+            "dynamic_long_target_vol",
+            "dynamic_long_base",
+            "dynamic_long_conf",
+            "dynamic_short_bear_on",
+            "short_accel_ret_max",
+            "short_rebound_z",
+            "dynamic_short_sma_mult",
+            "dynamic_short_target_vol",
+            "dynamic_short_base",
+            "dynamic_short_conf",
+            "channel_slope_deadband",
+            "range_bias_strength",
+            "channel_slope_window",
             "range_mr_cap",
             "range_z_entry",
             "range_trend_max",
