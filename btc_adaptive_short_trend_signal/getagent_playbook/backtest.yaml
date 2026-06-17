@@ -13,6 +13,7 @@ strategy:
   config:
     order_id_tag: "001"
     margin_budget: "1000"
+    leverage: 3
     min_trade_size: "0.001"
     target_step_weight: 0.02
     fast_window: 12

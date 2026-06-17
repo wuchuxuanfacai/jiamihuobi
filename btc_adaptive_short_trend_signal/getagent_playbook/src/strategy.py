@@ -25,6 +25,7 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     bar_types: tuple[BarType, ...] = ()
     order_id_tag: str = "001"
     margin_budget: str = "1000"
+    leverage: int = 3
     min_trade_size: str = "0.001"
     target_step_weight: float = 0.02
     fast_window: int = 12
@@ -169,8 +170,9 @@ class AdaptiveShortTrendStrategy(Strategy):
         if abs(target_weight) < float(self.cfg.target_step_weight):
             return 0.0
         budget = max(float(self.cfg.margin_budget), 0.0)
+        leverage = max(float(self.cfg.leverage), 1.0)
         min_qty = float(self.cfg.min_trade_size)
-        raw_qty = abs(target_weight) * budget / max(price, 1e-9)
+        raw_qty = abs(target_weight) * budget * leverage / max(price, 1e-9)
         rounded = self._round_qty(raw_qty, min_qty)
         if rounded < min_qty:
             return 0.0
@@ -179,8 +181,9 @@ class AdaptiveShortTrendStrategy(Strategy):
     def _clip_target_qty(self, target_qty: float, price: float) -> float:
         max_weight = max(float(self.cfg.max_short_weight), float(self.cfg.max_long_weight), 0.0)
         budget = max(float(self.cfg.margin_budget), 0.0)
+        leverage = max(float(self.cfg.leverage), 1.0)
         min_qty = float(self.cfg.min_trade_size)
-        max_qty = self._round_qty(max_weight * budget / max(price, 1e-9), min_qty)
+        max_qty = self._round_qty(max_weight * budget * leverage / max(price, 1e-9), min_qty)
         if max_qty <= 0.0:
             return 0.0
         return float(np.clip(target_qty, -max_qty, max_qty))
@@ -205,6 +208,7 @@ class AdaptiveShortTrendStrategy(Strategy):
     def _config_dict(self) -> dict[str, float | str]:
         keys = (
             "margin_budget",
+            "leverage",
             "min_trade_size",
             "target_step_weight",
             "fast_window",

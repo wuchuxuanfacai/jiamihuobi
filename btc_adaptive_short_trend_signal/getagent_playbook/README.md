@@ -54,6 +54,16 @@ earlier; lower aggressiveness makes it wait for cleaner confirmation. Higher
 exposure caps permit larger positions in confirmed regimes, while lower caps
 make the strategy more defensive.
 
+## Reading Returns
+
+The strategy card's total return is the portfolio result on the declared
+strategy margin budget after closed-trade PnL and fees. Individual trade rows
+can show a much smaller percentage because that row is tied to the entry and
+exit price movement of a single round trip, not the full strategy equity curve.
+Very short price moves can display near zero percent while still producing
+negative net PnL after taker fees. The replay sizes contract quantity from the
+margin budget, leverage, target weight, current price, and exchange lot size.
+
 ## Costs And Slippage
 
 The package declares maker and taker fees in `backtest.yaml`, so GetAgent Cloud

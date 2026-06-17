@@ -96,6 +96,7 @@ def _effective_spec(config: dict[str, Any]) -> dict[str, Any]:
     bars_per_day = 6.0 if interval == "4h" else 24.0 if interval == "1h" else 96.0
     mapped = {
         "margin_budget": str(config.get("margin_budget") or strategy_config.get("margin_budget") or "1000"),
+        "leverage": _as_int(config.get("leverage"), _as_int(strategy_config.get("leverage"), 3)),
         "min_trade_size": str(config.get("min_trade_size") or strategy_config.get("min_trade_size") or "0.001"),
         "target_step_weight": _as_float(config.get("target_step_weight"), strategy_config.get("target_step_weight", 0.02)),
         "fast_window": _rolling_days(config.get("fast_trend_days"), bars_per_day, 3),
