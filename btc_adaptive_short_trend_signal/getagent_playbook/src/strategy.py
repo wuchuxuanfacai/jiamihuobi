@@ -51,6 +51,12 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     high_vol_short_cap: float = 1.0
     high_vol_short_base: float = 0.65
     high_vol_short_conf: float = 0.0
+    long_on: float = 0.50
+    long_ret_mid_min: float = 0.01
+    long_sma_mult: float = 1.0
+    long_vol_ceiling: float = 0.45
+    long_floor_cap: float = 0.50
+    max_long_weight: float = 0.50
     trade_start: str = ""
 
 
@@ -106,6 +112,15 @@ class AdaptiveShortTrendStrategy(Strategy):
             + float(ret_mid < 0.0)
             + float(ret_slow < 0.0)
         ) / 7.0
+        trend_strength = (
+            float(latest > sma_fast)
+            + float(latest > sma_mid)
+            + float(latest > sma_slow)
+            + float(sma_fast > sma_mid)
+            + float(sma_mid > sma_slow)
+            + float(ret_mid > 0.0)
+            + float(ret_slow > 0.0)
+        ) / 7.0
 
         weak_momentum = (
             ret_mid < self.cfg.ret_mid_max
@@ -132,14 +147,29 @@ class AdaptiveShortTrendStrategy(Strategy):
             and latest < sma_long * self.cfg.high_vol_sma_mult
             and not rebound_blocked
         )
+        long_ok = (
+            not short_ok
+            and not high_vol_short_ok
+            and trend_strength >= self.cfg.long_on
+            and ret_mid > self.cfg.long_ret_mid_min
+            and latest > sma_long * self.cfg.long_sma_mult
+            and realized_vol <= self.cfg.long_vol_ceiling
+        )
 
         instrument = self._instrument
         if instrument is None:
             return
         if self._trade_start_ns and int(bar.ts_event) < self._trade_start_ns:
             return
-        target_weight = self._target_weight(short_ok, high_vol_short_ok, bear_strength, realized_vol)
-        target_qty = self._target_short_qty(target_weight, latest)
+        target_weight = self._target_weight(
+            short_ok,
+            high_vol_short_ok,
+            long_ok,
+            bear_strength,
+            trend_strength,
+            realized_vol,
+        )
+        target_qty = self._target_qty(target_weight, latest)
         current_qty = self._current_signed_qty(instrument.id)
         delta_qty = target_qty - current_qty
         min_qty = float(self.cfg.min_trade_size)
@@ -171,11 +201,20 @@ class AdaptiveShortTrendStrategy(Strategy):
         self,
         short_ok: bool,
         high_vol_short_ok: bool,
+        long_ok: bool,
         bear_strength: float,
+        trend_strength: float,
         realized_vol: float,
     ) -> float:
-        if not short_ok and not high_vol_short_ok:
+        if not short_ok and not high_vol_short_ok and not long_ok:
             return 0.0
+        if long_ok:
+            trend_conf = min(
+                1.0,
+                max(0.0, (trend_strength - self.cfg.long_on) / max(1.0 - self.cfg.long_on, 1e-9)),
+            )
+            raw_long = float(self.cfg.long_floor_cap) * (0.5 + 0.5 * trend_conf)
+            return min(float(self.cfg.max_long_weight), max(0.0, raw_long))
         safe_vol = max(float(realized_vol), float(self.cfg.vol_floor_min))
         threshold = self.cfg.bear_on if short_ok else self.cfg.high_vol_bear_on
         bear_conf = min(1.0, max(0.0, (bear_strength - threshold) / max(1.0 - threshold, 1e-9)))
@@ -190,14 +229,16 @@ class AdaptiveShortTrendStrategy(Strategy):
         scaled = raw * float(self.cfg.weight_scale)
         return max(-float(self.cfg.max_short_weight), min(0.0, scaled))
 
-    def _target_short_qty(self, target_weight: float, price: float) -> float:
+    def _target_qty(self, target_weight: float, price: float) -> float:
         if abs(target_weight) < float(self.cfg.target_step_weight):
             return 0.0
         budget = max(float(self.cfg.margin_budget), 0.0)
         min_qty = float(self.cfg.min_trade_size)
         raw_qty = abs(target_weight) * budget / max(price, 1e-9)
         rounded = self._round_qty(raw_qty, min_qty)
-        return -rounded if rounded >= min_qty else 0.0
+        if rounded < min_qty:
+            return 0.0
+        return rounded if target_weight > 0.0 else -rounded
 
     @staticmethod
     def _round_qty(value: float, step: float) -> float:

@@ -127,6 +127,12 @@ def _effective_spec(config: dict[str, Any]) -> dict[str, Any]:
         "high_vol_short_cap": _as_float(config.get("high_vol_short_cap"), strategy_config.get("high_vol_short_cap", 1.0)),
         "high_vol_short_base": _as_float(config.get("high_vol_short_base"), strategy_config.get("high_vol_short_base", 0.65)),
         "high_vol_short_conf": _as_float(config.get("high_vol_short_conf"), strategy_config.get("high_vol_short_conf", 0.0)),
+        "long_on": _as_float(config.get("long_on"), strategy_config.get("long_on", 0.50)),
+        "long_ret_mid_min": _as_float(config.get("long_ret_mid_min"), strategy_config.get("long_ret_mid_min", 0.01)),
+        "long_sma_mult": _as_float(config.get("long_sma_mult"), strategy_config.get("long_sma_mult", 1.0)),
+        "long_vol_ceiling": _as_float(config.get("long_vol_ceiling"), strategy_config.get("long_vol_ceiling", 0.45)),
+        "long_floor_cap": _as_float(config.get("long_floor_cap"), strategy_config.get("long_floor_cap", 0.50)),
+        "max_long_weight": _as_float(config.get("max_long_weight"), strategy_config.get("max_long_weight", 0.50)),
     }
     strategy_config.update(mapped)
     trade_start = str(config.get("cloud_trade_start") or strategy_config.get("trade_start") or "")

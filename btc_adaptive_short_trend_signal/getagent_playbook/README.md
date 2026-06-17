@@ -3,9 +3,9 @@
 ## Strategy 策略
 
 This Playbook is a BTCUSDT perpetual futures signal. Its core engine is a
-volatility-scaled short trend floor: when BTC is in a confirmed weak regime, the
-strategy keeps a controlled short signal instead of waiting for repeated fresh
-breakdowns.
+adaptive trend floor: when BTC is in a confirmed weak regime, the strategy
+keeps a controlled short signal, and when BTC is in a confirmed recovery regime
+it can hold a smaller long trend floor.
 
 The strategy uses only replayable intraday futures bars in the uploaded code
 path. Private research files, local databases, and raw optimization inputs are
@@ -15,9 +15,9 @@ not included in the upload package.
 
 The Playbook opens a short signal when bearish trend alignment, medium-term
 momentum, broader trend position, rebound filtering, and volatility checks
-agree. The short trend floor is expressed as a target exposure, not as a fixed
-order size. Long entries are disabled by default, so the configuration is
-strictly short-or-flat.
+agree. The trend floor is expressed as a target exposure, not as a fixed order
+size. Short exposure is dominant, while the long path is capped and only used
+when the broader recovery structure confirms.
 
 If the bearish regime is not confirmed, the strategy emits hold. It does not
 short every dip, and it avoids entries when the rebound filter suggests the
@@ -27,8 +27,8 @@ market has already recovered enough to invalidate the short setup.
 
 A short signal closes when bearish alignment fades, momentum no longer confirms
 the move, price recovers into the broader trend reference, or
-volatility-adjusted sizing no longer supports exposure. There is no default
-long entry path.
+volatility-adjusted sizing no longer supports exposure. Long exposure closes
+when the recovery trend no longer confirms.
 
 This package emits managed signals and includes a simplified deterministic
 historical replay path for GetAgent Cloud validation. It is compatible with
@@ -42,8 +42,9 @@ hard caps on target exposure.
 ## Parameters 参数
 
 Subscribers can tune leverage, margin budget, timeframe, aggressiveness, weight
-scale, maximum signal weight, max short weight, trend lookbacks, short floor
-cap, short target volatility, and volatility ceiling.
+scale, maximum signal weight, max short weight, max long weight, trend
+lookbacks, short floor cap, long floor cap, short target volatility, and
+volatility ceiling.
 
 Higher leverage amplifies both gains and drawdowns. Margin budget controls the
 capital base used by the platform for sizing and return interpretation. Higher
@@ -75,9 +76,8 @@ model rather than a fixed-size short-entry model.
 
 ## Risk 风险
 
-The main risk is a sharp BTC rebound after a short signal. The strategy can also
-underperform in choppy ranges, news-driven gaps, exchange slippage, funding
-stress, and regimes where downside momentum decays before the model exits.
-Because the default is short-led, persistent bull markets can produce long
-periods of holding or losing short attempts. Past local performance is not a
-guarantee of live profitability.
+The main risk is a sharp BTC rebound after a short signal or a failed recovery
+after a long signal. The strategy can also underperform in choppy ranges,
+news-driven gaps, exchange slippage, funding stress, and regimes where momentum
+decays before the model exits. Past local performance is not a guarantee of
+live profitability.

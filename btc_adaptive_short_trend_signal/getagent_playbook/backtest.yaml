@@ -44,6 +44,12 @@ strategy:
     high_vol_short_cap: 1.0
     high_vol_short_base: 0.65
     high_vol_short_conf: 0.0
+    long_on: 0.50
+    long_ret_mid_min: 0.01
+    long_sma_mult: 1.0
+    long_vol_ceiling: 0.45
+    long_floor_cap: 0.50
+    max_long_weight: 0.50
     trade_start: "2026-03-03T00:00:00Z"
 
 execution:

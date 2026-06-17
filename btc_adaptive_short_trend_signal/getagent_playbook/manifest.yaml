@@ -1,15 +1,15 @@
 name: btc-adaptive-short-trend-signal
 display_name: "BTC Adaptive Short Trend Signal"
 version: "0.1.0"
-description: "BTC contract signal using a volatility-scaled short trend floor with rebound filters"
+description: "BTC contract signal using adaptive long and short trend floors with rebound filters"
 long_description: |
-  This Playbook is an adaptive BTC perpetual futures signal designed to capture sustained downside trend behavior while staying out of unclear ranges. Its thesis is that after BTC enters a persistent weak structure, price often continues to travel lower before the trend fully resolves. The model is therefore defensive by default: it looks for clean bearish alignment, scales exposure by recent volatility, and keeps a hard short-or-flat posture instead of adding recovery longs. It aims to participate in directional bear phases without constantly fading every small bounce.
+  This Playbook is an adaptive BTC perpetual futures signal designed to capture sustained trend behavior while staying out of unclear ranges. Its thesis is that after BTC enters a persistent directional structure, price often continues to travel before the trend fully resolves. The model is therefore selective by default: it looks for clean alignment, scales exposure by recent volatility, and can hold either a dominant short trend floor or a smaller recovery long floor. It aims to participate in directional phases without constantly fading every small move.
 
-  Entry decisions are based on price action, trend alignment, momentum persistence, recent volatility, and whether a rebound has already become strong enough to invalidate the short setup. The strategy opens short when several downside checks agree and price remains below its broader trend reference. It does not open long by default; when downside confirmation is absent, the Playbook emits a hold signal rather than forcing a trade.
+  Entry decisions are based on price action, trend alignment, momentum persistence, recent volatility, and whether a rebound has already become strong enough to invalidate a downside setup. The strategy opens short when several downside checks agree and price remains below its broader trend reference. It opens long only when the recovery structure is clear enough and capped exposure is justified. When confirmation is absent, the Playbook emits a hold signal rather than forcing a trade.
 
-  Exits work by withdrawal of regime confirmation. A short signal closes when bearish alignment fades, momentum stops confirming, price recovers into the trend reference, or volatility-adjusted sizing no longer justifies exposure. There is no default long entry path to close. The Playbook is compatible with managed follow-trade deployment, while historical validation uses a deterministic replay of the same price-regime logic.
+  Exits work by withdrawal of regime confirmation. A short signal closes when bearish alignment fades, momentum stops confirming, price recovers into the trend reference, or volatility-adjusted sizing no longer justifies exposure. A long signal closes when recovery alignment fades or the broader trend reference no longer supports exposure. The Playbook is compatible with managed follow-trade deployment, while historical validation uses a deterministic replay of the same price-regime logic.
 
-  Subscribers can tune leverage, margin budget, signal aggressiveness, maximum signal weight, short exposure cap, and volatility scaling. Higher leverage amplifies both upside and drawdown without improving signal quality. Margin budget controls the capital base used for sizing and return interpretation. Raising aggressiveness makes the model act earlier, while lowering it makes signals more selective. Raising exposure caps allows larger signals in confirmed regimes; lowering them makes the strategy more defensive.
+  Subscribers can tune leverage, margin budget, signal aggressiveness, maximum signal weight, short exposure cap, long exposure cap, and volatility scaling. Higher leverage amplifies both upside and drawdown without improving signal quality. Margin budget controls the capital base used for sizing and return interpretation. Raising aggressiveness makes the model act earlier, while lowering it makes signals more selective. Raising exposure caps allows larger signals in confirmed regimes; lowering them makes the strategy more defensive.
 
   The main risk is being caught in sharp rebounds, news gaps, and choppy ranges where downside signals appear briefly and then reverse. The strategy can underperform or lose money when BTC rallies persistently, when bearish momentum decays slowly, or when liquidity and slippage differ from historical assumptions. Historical local research is useful context, but it is not a guarantee of live profitability, and subscribers should expect drawdown and unsuitable market periods.
 market_type: contract
@@ -56,8 +56,11 @@ strategy_config:
   ret_mid_min: 0.0
   long_sma_mult: 1.02
   long_target_vol: 0.0
-  long_floor_cap: 0.0
-  max_long_weight: 0.0
+  long_floor_cap: 0.50
+  max_long_weight: 0.50
+  long_on: 0.50
+  long_ret_mid_min: 0.01
+  long_vol_ceiling: 0.45
   vol_ceiling: 0.35
   vol_floor_min: 0.20
   high_vol_floor: 0.40
@@ -132,9 +135,9 @@ user_config_schema:
     label: "Max short weight"
   max_long_weight:
     type: number
-    default: 0.0
+    default: 0.50
     min: 0.0
-    max: 0.0
+    max: 1.0
     label: "Max long weight"
   fast_trend_days:
     type: number
@@ -180,9 +183,9 @@ user_config_schema:
     label: "Short target volatility"
   long_floor_cap:
     type: number
-    default: 0.0
+    default: 0.50
     min: 0.0
-    max: 0.0
+    max: 1.0
     label: "Long floor cap"
   vol_ceiling:
     type: number

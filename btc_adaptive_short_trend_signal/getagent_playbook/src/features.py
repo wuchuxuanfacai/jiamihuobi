@@ -165,13 +165,32 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
         ),
     ) if high_vol_short_ok else 0.0
     short_floor = -min(short_cap, (short_target_vol / vol) * (short_base + short_conf * bear_conf)) if short_ok else high_vol_floor
-    long_floor = 0.0
+    long_on = _as_float(config.get("long_on"), 0.50)
+    long_ok = (
+        not short_ok
+        and not high_vol_short_ok
+        and latest_trend >= long_on
+        and latest_ret_mid > _as_float(config.get("long_ret_mid_min"), 0.01)
+        and last_close > latest_sma_long * _as_float(config.get("long_sma_mult"), 1.0)
+        and vol <= _as_float(config.get("long_vol_ceiling"), 0.45)
+    )
+    long_confidence = min(1.0, max(0.0, (latest_trend - long_on) / max(1.0 - long_on, 1e-9)))
+    long_floor = (
+        min(max_long_weight, _as_float(config.get("long_floor_cap"), 0.50))
+        * (0.5 + 0.5 * long_confidence)
+        if long_ok
+        else 0.0
+    )
 
     raw_target = float(np.clip((short_floor + long_floor) * weight_scale, -max_short_weight, max_long_weight))
     if short_ok or high_vol_short_ok:
         action = "short"
         confidence = min(0.95, 0.50 + 0.45 * latest_bear)
         regime = "short_trend_floor" if short_ok else "high_vol_small_short"
+    elif long_ok:
+        action = "long"
+        confidence = min(0.95, 0.50 + 0.45 * latest_trend)
+        regime = "long_trend_floor"
     else:
         action = "hold"
         confidence = 0.50
@@ -198,6 +217,7 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
         "high_vol_short_ok": bool(high_vol_short_ok),
         "high_vol_floor": high_vol_floor,
         "long_trend_floor": long_floor,
+        "long_ok": bool(long_ok),
         "weight_scale": weight_scale,
         "target_weight": raw_target,
         "weak_momentum": bool(weak_momentum),
