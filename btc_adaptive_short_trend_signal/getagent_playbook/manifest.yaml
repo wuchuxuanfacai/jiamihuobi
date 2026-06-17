@@ -1,20 +1,20 @@
 name: btc-adaptive-short-trend-signal
-display_name: "BTC Adaptive Short Trend Signal"
+display_name: "BTC Adaptive Trend Range Signal"
 version: "0.1.0"
-description: "BTC contract signal using adaptive long and short trend floors with rebound filters"
+description: "BTC contract strategy combining trend long, trend short, and range mean-reversion target weights"
 long_description: |
-  This Playbook is an adaptive BTC perpetual futures signal designed to capture sustained trend behavior while staying out of unclear ranges. Its thesis is that after BTC enters a persistent directional structure, price often continues to travel before the trend fully resolves. The model is therefore selective by default: it looks for clean alignment, scales exposure by recent volatility, and can hold either a dominant short trend floor or a smaller recovery long floor. It aims to participate in directional phases without constantly fading every small move.
+  This Playbook is an adaptive BTC perpetual futures strategy designed to capture sustained trends and controlled range reversals. Its thesis is that BTC alternates between directional phases, where a base position can ride the broader move, and quieter channel phases, where extremes can be faded with smaller flexible exposure. The model combines separate long-trend, short-trend, and range mean-reversion components into one target weight, then scales exposure by recent volatility so that position size contracts when price action becomes unstable.
 
-  Entry decisions are based on price action, trend alignment, momentum persistence, recent volatility, and whether a rebound has already become strong enough to invalidate a downside setup. The strategy opens short when several downside checks agree and price remains below its broader trend reference. It opens long only when the recovery structure is clear enough and capped exposure is justified. When confirmation is absent, the Playbook emits a hold signal rather than forcing a trade.
+  Entry decisions are based on price action, trend alignment, momentum persistence, channel location, and recent volatility. The strategy opens long when upside alignment is strong enough to support a trend floor, or when a healthy trend has a short-term pullback or acceleration setup. It opens short when downside alignment is strong enough to support a short floor, or when a bearish structure shows a breakdown or rebound failure. In a neutral range, it can buy lower-channel weakness and short upper-channel strength.
 
-  Exits work by withdrawal of regime confirmation. A short signal closes when bearish alignment fades, momentum stops confirming, price recovers into the trend reference, or volatility-adjusted sizing no longer justifies exposure. A long signal closes when recovery alignment fades or the broader trend reference no longer supports exposure. The Playbook is compatible with managed follow-trade deployment, while historical validation uses a deterministic replay of the same price-regime logic.
+  Exits work by withdrawal of regime confirmation and target-weight reduction. A long closes when upside alignment fades, a pullback no longer looks constructive, or volatility-adjusted sizing no longer justifies exposure. A short closes when bearish alignment fades, rebound pressure invalidates the setup, or the market leaves the lower-risk volatility zone. Range positions close when price moves away from the channel extreme or a clearer trend regime takes over, allowing the composite target to return toward flat.
 
   Subscribers can tune leverage, margin budget, signal aggressiveness, maximum signal weight, short exposure cap, long exposure cap, and volatility scaling. Higher leverage amplifies both upside and drawdown without improving signal quality. Margin budget controls the capital base used for sizing and return interpretation. Raising aggressiveness makes the model act earlier, while lowering it makes signals more selective. Raising exposure caps allows larger signals in confirmed regimes; lowering them makes the strategy more defensive.
 
   The main risk is being caught in sharp rebounds, news gaps, and choppy ranges where downside signals appear briefly and then reverse. The strategy can underperform or lose money when BTC rallies persistently, when bearish momentum decays slowly, or when liquidity and slippage differ from historical assumptions. Historical local research is useful context, but it is not a guarantee of live profitability, and subscribers should expect drawdown and unsuitable market periods.
 market_type: contract
 trading_symbols: ["BTCUSDT"]
-tags: ["btc", "contract", "trend", "short", "adaptive"]
+tags: ["btc", "contract", "trend", "range", "adaptive"]
 schedule:
   cron: "10 */4 * * *"
   tz: "Asia/Shanghai"
@@ -31,40 +31,47 @@ strategy_config:
   timeframe: "4h"
   history_days: 220
   aggressiveness: 1.0
-  weight_scale: 1.2
+  weight_scale: 1.3308
   fast_trend_days: 2
   mid_trend_days: 7
   slow_trend_days: 14
   long_trend_days: 45
   vol_days: 10
-  bear_on: 0.42
+  bear_on: 0.3892
   bear_off: 0.30
   ret_slow_max: -0.04
   ret_mid_max: 0.01
   short_sma_mult: 1.03
   mid_sma_mult: 1.0
-  rebound_ret_max: 0.04
+  rebound_ret_max: 0.0364
   rebound_sma_mult: 1.005
-  short_target_vol: 1.20
-  short_floor_cap: 1.60
+  short_target_vol: 1.0622
+  short_floor_cap: 1.8962
   short_base: 0.65
   short_conf: 0.55
-  max_short_weight: 1.60
-  max_signal_weight: 1.60
+  max_short_weight: 1.7936
+  max_signal_weight: 2.00
   trend_on: 0.68
   ret_slow_min: 0.0
   ret_mid_min: 0.0
   long_sma_mult: 1.02
   long_target_vol: 0.0
-  long_floor_cap: 0.50
-  max_long_weight: 0.50
-  long_on: 0.50
-  long_ret_mid_min: 0.01
-  long_vol_ceiling: 0.45
-  vol_ceiling: 0.35
+  long_floor_cap: 0.4790
+  max_long_weight: 0.6368
+  long_on: 0.4532
+  long_ret_mid_min: -0.0072
+  long_vol_ceiling: 0.5325
+  dynamic_long_cap: 0.6266
+  dynamic_short_cap: 0.1395
+  range_mr_cap: 0.2155
+  range_z_entry: 0.8910
+  range_trend_max: 0.6447
+  range_bear_max: 0.5977
+  range_vol_ceiling: 0.6684
+  vol_ceiling: 0.3268
   vol_floor_min: 0.20
-  high_vol_floor: 0.40
-  high_vol_ceiling: 0.55
+  high_vol_floor: 0.4086
+  high_vol_ceiling: 0.6006
   high_vol_bear_on: 0.42
   high_vol_sma_mult: 1.02
   high_vol_target_vol: 0.50
@@ -117,25 +124,25 @@ user_config_schema:
     label: "Signal aggressiveness"
   weight_scale:
     type: number
-    default: 1.2
+    default: 1.3308
     min: 0.5
     max: 2.0
     label: "Weight scale"
   max_signal_weight:
     type: number
-    default: 1.60
+    default: 2.00
     min: 0.01
     max: 2.0
     label: "Max signal weight"
   max_short_weight:
     type: number
-    default: 1.60
+    default: 1.7936
     min: 0.0
     max: 2.0
     label: "Max short weight"
   max_long_weight:
     type: number
-    default: 0.50
+    default: 0.6368
     min: 0.0
     max: 1.0
     label: "Max long weight"
@@ -165,31 +172,31 @@ user_config_schema:
     label: "Long trend lookback"
   bear_on:
     type: number
-    default: 0.42
-    min: 0.4
+    default: 0.3892
+    min: 0.3
     max: 0.9
     label: "Bear trend threshold"
   short_floor_cap:
     type: number
-    default: 1.60
+    default: 1.8962
     min: 0.0
     max: 2.0
     label: "Short floor cap"
   short_target_vol:
     type: number
-    default: 1.20
+    default: 1.0622
     min: 0.01
     max: 1.2
     label: "Short target volatility"
   long_floor_cap:
     type: number
-    default: 0.50
+    default: 0.4790
     min: 0.0
     max: 1.0
     label: "Long floor cap"
   vol_ceiling:
     type: number
-    default: 0.35
+    default: 0.3268
     min: 0.1
     max: 9.0
     label: "Volatility ceiling"

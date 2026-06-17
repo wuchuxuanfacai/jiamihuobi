@@ -1,32 +1,36 @@
-# BTC Adaptive Short Trend Signal Repro Pack
+# BTC Adaptive Trend Range Signal Repro Pack
 
-This folder contains a public, reproducible BTCUSDT perpetual futures signal
-package for GetAgent. The strategy is built around a volatility-scaled short
-trend floor, rebound filtering, and capped exposure.
+This folder contains a public BTCUSDT perpetual futures strategy package for
+GetAgent. The current package is a composite target-position strategy. It
+combines a trend-long model, a trend-short model, and a range mean-reversion
+model, then clips the summed target weight.
 
 ## What Is Included
 
-- `getagent_playbook/` is the GetAgent package with signal output and a
-  deterministic Cloud backtest path.
-- `research_snapshot/` contains the frozen candidate-selection evidence.
-- `scripts/reproduce_metrics.py` reloads the frozen snapshot and verifies that
-  the selected row passes the target checks.
+- `getagent_playbook/` is the GetAgent package with deterministic Cloud
+  backtest support and managed follow-trade compatibility.
+- `research_snapshot/` contains frozen local candidate-selection evidence from
+  an earlier research run.
+- `scripts/reproduce_metrics.py` verifies that the frozen research snapshot is
+  still reproducible.
 
-No API keys, private DuckDB databases, or Bitget credentials are included.
+No API keys, private DuckDB databases, local raw data, or Bitget credentials are
+included.
 
-## Core Idea
+## Current Strategy
 
-The model looks for persistent bearish alignment in BTCUSDT perpetual futures.
-It requires medium-term weakness to remain intact, filters out strong rebounds,
-uses recent realized volatility to size the short floor, and caps target
-exposure. The uploaded code uses a hard short-or-flat posture and translates
-the volatility-scaled floor into a target BTC quantity, so it behaves like a
-low average exposure position-adjustment model rather than a fixed-size short
-entry model.
+The uploaded package uses replayable intraday futures bars. Its trend-long
+component can hold a long base and add a dynamic long weight during acceleration
+or constructive pullback conditions. Its trend-short component can hold a short
+base and add dynamic short weight during breakdown or rebound-failure
+conditions. Its range component is only active when neither side has a dominant
+trend; it fades channel extremes with smaller flexible weights and adjusts the
+long/short bias for gently rising or falling channels.
 
-The GetAgent package uses sandbox-replayable intraday futures bars. The frozen
-research snapshot was exported from a local optimization run. The private raw
-market database is intentionally not part of this public repo.
+The Cloud path trades target-position adjustments rather than isolated fixed
+entry signals. It fetches pre-roll history before the declared trading window so
+trend, channel, and volatility features are already formed at the first traded
+bar.
 
 ## Reproduce The Frozen Metrics
 
@@ -49,7 +53,7 @@ and writes:
 research_snapshot/reproduced_metrics.json
 ```
 
-Expected selected row:
+Expected frozen selected row:
 
 | Split | Annual Return | Total Return | Sharpe | Max Drawdown |
 |---|---:|---:|---:|---:|
@@ -57,25 +61,23 @@ Expected selected row:
 | locked_test | 88.38% | 25.52% | 3.75 | -3.01% |
 | train | 0.54% | 2.74% | 0.12 | -7.89% |
 
-The selected candidate is `source_rank=1`, `weight_scale=1.40`, `timeframe=4h`.
-The script reports `"passed": true` only when validation and locked-test both
-meet the target.
+The selected frozen candidate is `source_rank=1`, `weight_scale=1.40`,
+`timeframe=4h`. This snapshot is local research evidence, not official GetAgent
+Cloud proof for the current composite package.
 
 ## GetAgent Package
 
 ```text
 name: btc-adaptive-short-trend-signal
+display_name: BTC Adaptive Trend Range Signal
 backtest_support: full
 execution_mode: follow_trade
 ```
 
 The package includes `backtest.yaml` and a Nautilus strategy class so GetAgent
-Cloud can run historical validation. Cloud results may differ from the frozen
-research snapshot because they use platform K-lines and the platform replay
-window. The current Cloud configuration fetches pre-roll history, then trades
-from the declared Cloud trading window with target-position adjustments and
-exchange minimum-lot rounding. The uploaded logic does not import local files
-or direct exchange clients.
+Cloud can run historical validation. Cloud results may differ from local
+research because they use the platform K-line provider, the platform replay
+engine, venue assumptions, and minimum-lot rounding.
 
 ## Files
 
@@ -87,6 +89,7 @@ getagent_playbook/
   src/main.py
   src/features.py
   src/strategy.py
+  src/decision_logic.py
 
 research_snapshot/
   selected_candidate_grid.csv

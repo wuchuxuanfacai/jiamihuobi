@@ -20,36 +20,44 @@ strategy:
     slow_window: 84
     long_window: 270
     vol_window: 60
-    bear_on: 0.42
+    bear_on: 0.3892
     bear_off: 0.30
     ret_slow_max: -0.04
     ret_mid_max: 0.01
     short_sma_mult: 1.03
     mid_sma_mult: 1.0
-    rebound_ret_max: 0.04
+    rebound_ret_max: 0.0364
     rebound_sma_mult: 1.005
-    short_target_vol: 1.20
-    short_floor_cap: 1.6
-    max_short_weight: 1.6
+    short_target_vol: 1.0622
+    short_floor_cap: 1.8962
+    max_short_weight: 1.7936
+    max_signal_weight: 2.00
     short_base: 0.65
     short_conf: 0.55
-    weight_scale: 1.2
-    vol_ceiling: 0.35
+    weight_scale: 1.3308
+    vol_ceiling: 0.3268
     vol_floor_min: 0.20
-    high_vol_floor: 0.40
-    high_vol_ceiling: 0.55
+    high_vol_floor: 0.4086
+    high_vol_ceiling: 0.6006
     high_vol_bear_on: 0.42
     high_vol_sma_mult: 1.02
     high_vol_target_vol: 0.50
     high_vol_short_cap: 1.0
     high_vol_short_base: 0.65
     high_vol_short_conf: 0.0
-    long_on: 0.50
-    long_ret_mid_min: 0.01
+    long_on: 0.4532
+    long_ret_mid_min: -0.0072
     long_sma_mult: 1.0
-    long_vol_ceiling: 0.45
-    long_floor_cap: 0.50
-    max_long_weight: 0.50
+    long_vol_ceiling: 0.5325
+    long_floor_cap: 0.4790
+    max_long_weight: 0.6368
+    dynamic_long_cap: 0.6266
+    dynamic_short_cap: 0.1395
+    range_mr_cap: 0.2155
+    range_z_entry: 0.8910
+    range_trend_max: 0.6447
+    range_bear_max: 0.5977
+    range_vol_ceiling: 0.6684
     trade_start: "2026-03-03T00:00:00Z"
 
 execution:

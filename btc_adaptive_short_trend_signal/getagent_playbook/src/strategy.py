@@ -12,6 +12,11 @@ from nautilus_trader.model.instruments import Instrument
 from nautilus_trader.model.objects import Quantity
 from nautilus_trader.trading.strategy import Strategy
 
+try:
+    from .decision_logic import compute_signal_state
+except ImportError:  # Nautilus may import this module from the src path.
+    from decision_logic import compute_signal_state
+
 
 class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     instrument_id: Optional[InstrumentId] = None
@@ -27,36 +32,44 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     slow_window: int = 84
     long_window: int = 270
     vol_window: int = 60
-    bear_on: float = 0.42
+    bear_on: float = 0.3892
     bear_off: float = 0.30
     ret_slow_max: float = -0.04
     ret_mid_max: float = 0.01
     short_sma_mult: float = 1.03
     mid_sma_mult: float = 1.0
-    rebound_ret_max: float = 0.04
+    rebound_ret_max: float = 0.0364
     rebound_sma_mult: float = 1.005
-    short_target_vol: float = 1.20
-    short_floor_cap: float = 1.6
-    max_short_weight: float = 1.6
+    short_target_vol: float = 1.0622
+    short_floor_cap: float = 1.8962
+    max_short_weight: float = 1.7936
+    max_signal_weight: float = 2.00
     short_base: float = 0.65
     short_conf: float = 0.55
-    weight_scale: float = 1.2
-    vol_ceiling: float = 0.35
+    weight_scale: float = 1.3308
+    vol_ceiling: float = 0.3268
     vol_floor_min: float = 0.20
-    high_vol_floor: float = 0.40
-    high_vol_ceiling: float = 0.55
+    high_vol_floor: float = 0.4086
+    high_vol_ceiling: float = 0.6006
     high_vol_bear_on: float = 0.42
     high_vol_sma_mult: float = 1.02
     high_vol_target_vol: float = 0.50
     high_vol_short_cap: float = 1.0
     high_vol_short_base: float = 0.65
     high_vol_short_conf: float = 0.0
-    long_on: float = 0.50
-    long_ret_mid_min: float = 0.01
+    long_on: float = 0.4532
+    long_ret_mid_min: float = -0.0072
     long_sma_mult: float = 1.0
-    long_vol_ceiling: float = 0.45
-    long_floor_cap: float = 0.50
-    max_long_weight: float = 0.50
+    long_vol_ceiling: float = 0.5325
+    long_floor_cap: float = 0.4790
+    max_long_weight: float = 0.6368
+    dynamic_long_cap: float = 0.6266
+    dynamic_short_cap: float = 0.1395
+    range_mr_cap: float = 0.2155
+    range_z_entry: float = 0.8910
+    range_trend_max: float = 0.6447
+    range_bear_max: float = 0.5977
+    range_vol_ceiling: float = 0.6684
     trade_start: str = ""
 
 
@@ -88,87 +101,12 @@ class AdaptiveShortTrendStrategy(Strategy):
 
         values = np.asarray(self._closes, dtype=float)
         latest = float(values[-1])
-        fast = values[-self.cfg.fast_window :]
-        mid = values[-self.cfg.mid_window :]
-        slow = values[-self.cfg.slow_window :]
-        long = values[-self.cfg.long_window :]
-
-        sma_fast = float(np.mean(fast))
-        sma_mid = float(np.mean(mid))
-        sma_slow = float(np.mean(slow))
-        sma_long = float(np.mean(long))
-        ret_fast = latest / float(values[-self.cfg.fast_window]) - 1.0
-        ret_mid = latest / float(values[-self.cfg.mid_window]) - 1.0
-        ret_slow = latest / float(values[-self.cfg.slow_window]) - 1.0
-        vol_returns = np.diff(values[-(self.cfg.vol_window + 1) :]) / values[-(self.cfg.vol_window + 1) : -1]
-        realized_vol = float(np.std(vol_returns) * np.sqrt(365.0 * 6.0)) if len(vol_returns) else 9.0
-
-        bear_strength = (
-            float(latest < sma_fast)
-            + float(latest < sma_mid)
-            + float(latest < sma_slow)
-            + float(sma_fast < sma_mid)
-            + float(sma_mid < sma_slow)
-            + float(ret_mid < 0.0)
-            + float(ret_slow < 0.0)
-        ) / 7.0
-        trend_strength = (
-            float(latest > sma_fast)
-            + float(latest > sma_mid)
-            + float(latest > sma_slow)
-            + float(sma_fast > sma_mid)
-            + float(sma_mid > sma_slow)
-            + float(ret_mid > 0.0)
-            + float(ret_slow > 0.0)
-        ) / 7.0
-
-        weak_momentum = (
-            ret_mid < self.cfg.ret_mid_max
-            or ret_slow < self.cfg.ret_slow_max
-            or latest < sma_mid * self.cfg.mid_sma_mult
-        )
-        rebound_blocked = (
-            ret_fast > self.cfg.rebound_ret_max
-            and latest > sma_fast * self.cfg.rebound_sma_mult
-        )
-        short_ok = (
-            bear_strength >= self.cfg.bear_on
-            and weak_momentum
-            and latest < sma_long * self.cfg.short_sma_mult
-            and not rebound_blocked
-            and realized_vol <= self.cfg.vol_ceiling
-        )
-        high_vol_short_ok = (
-            not short_ok
-            and realized_vol > self.cfg.high_vol_floor
-            and realized_vol <= self.cfg.high_vol_ceiling
-            and bear_strength >= self.cfg.high_vol_bear_on
-            and weak_momentum
-            and latest < sma_long * self.cfg.high_vol_sma_mult
-            and not rebound_blocked
-        )
-        long_ok = (
-            not short_ok
-            and not high_vol_short_ok
-            and trend_strength >= self.cfg.long_on
-            and ret_mid > self.cfg.long_ret_mid_min
-            and latest > sma_long * self.cfg.long_sma_mult
-            and realized_vol <= self.cfg.long_vol_ceiling
-        )
-
         instrument = self._instrument
         if instrument is None:
             return
         if self._trade_start_ns and int(bar.ts_event) < self._trade_start_ns:
             return
-        target_weight = self._target_weight(
-            short_ok,
-            high_vol_short_ok,
-            long_ok,
-            bear_strength,
-            trend_strength,
-            realized_vol,
-        )
+        target_weight = compute_signal_state(values, self._config_dict(), bars_per_day=6.0).target_weight
         target_qty = self._target_qty(target_weight, latest)
         current_qty = self._current_signed_qty(instrument.id)
         delta_qty = target_qty - current_qty
@@ -197,38 +135,6 @@ class AdaptiveShortTrendStrategy(Strategy):
         )
         self.submit_order(order)
 
-    def _target_weight(
-        self,
-        short_ok: bool,
-        high_vol_short_ok: bool,
-        long_ok: bool,
-        bear_strength: float,
-        trend_strength: float,
-        realized_vol: float,
-    ) -> float:
-        if not short_ok and not high_vol_short_ok and not long_ok:
-            return 0.0
-        if long_ok:
-            trend_conf = min(
-                1.0,
-                max(0.0, (trend_strength - self.cfg.long_on) / max(1.0 - self.cfg.long_on, 1e-9)),
-            )
-            raw_long = float(self.cfg.long_floor_cap) * (0.5 + 0.5 * trend_conf)
-            return min(float(self.cfg.max_long_weight), max(0.0, raw_long))
-        safe_vol = max(float(realized_vol), float(self.cfg.vol_floor_min))
-        threshold = self.cfg.bear_on if short_ok else self.cfg.high_vol_bear_on
-        bear_conf = min(1.0, max(0.0, (bear_strength - threshold) / max(1.0 - threshold, 1e-9)))
-        target_vol = self.cfg.short_target_vol if short_ok else self.cfg.high_vol_target_vol
-        short_cap = self.cfg.short_floor_cap if short_ok else self.cfg.high_vol_short_cap
-        short_base = self.cfg.short_base if short_ok else self.cfg.high_vol_short_base
-        short_conf = self.cfg.short_conf if short_ok else self.cfg.high_vol_short_conf
-        raw = -min(
-            float(short_cap),
-            (float(target_vol) / safe_vol) * (float(short_base) + float(short_conf) * bear_conf),
-        )
-        scaled = raw * float(self.cfg.weight_scale)
-        return max(-float(self.cfg.max_short_weight), min(0.0, scaled))
-
     def _target_qty(self, target_weight: float, price: float) -> float:
         if abs(target_weight) < float(self.cfg.target_step_weight):
             return 0.0
@@ -256,6 +162,57 @@ class AdaptiveShortTrendStrategy(Strategy):
             else:
                 signed += quantity
         return signed
+
+    def _config_dict(self) -> dict[str, float | str]:
+        keys = (
+            "margin_budget",
+            "min_trade_size",
+            "target_step_weight",
+            "fast_window",
+            "mid_window",
+            "slow_window",
+            "long_window",
+            "vol_window",
+            "bear_on",
+            "bear_off",
+            "ret_slow_max",
+            "ret_mid_max",
+            "short_sma_mult",
+            "mid_sma_mult",
+            "rebound_ret_max",
+            "rebound_sma_mult",
+            "short_target_vol",
+            "short_floor_cap",
+            "max_short_weight",
+            "max_signal_weight",
+            "short_base",
+            "short_conf",
+            "weight_scale",
+            "vol_ceiling",
+            "vol_floor_min",
+            "high_vol_floor",
+            "high_vol_ceiling",
+            "high_vol_bear_on",
+            "high_vol_sma_mult",
+            "high_vol_target_vol",
+            "high_vol_short_cap",
+            "high_vol_short_base",
+            "high_vol_short_conf",
+            "long_on",
+            "long_ret_mid_min",
+            "long_sma_mult",
+            "long_vol_ceiling",
+            "long_floor_cap",
+            "max_long_weight",
+            "dynamic_long_cap",
+            "dynamic_short_cap",
+            "range_mr_cap",
+            "range_z_entry",
+            "range_trend_max",
+            "range_bear_max",
+            "range_vol_ceiling",
+        )
+        return {key: getattr(self.cfg, key) for key in keys}
 
     @staticmethod
     def _parse_timestamp_ns(value: str) -> int:

@@ -1,83 +1,83 @@
-# BTC Adaptive Short Trend Signal
+# BTC Adaptive Trend Range Signal
 
 ## Strategy 策略
 
-This Playbook is a BTCUSDT perpetual futures signal. Its core engine is a
-adaptive trend floor: when BTC is in a confirmed weak regime, the strategy
-keeps a controlled short signal, and when BTC is in a confirmed recovery regime
-it can hold a smaller long trend floor.
+This Playbook trades BTCUSDT perpetual futures with one composite target
+position. The target is built from three sub-models: a trend-long model, a
+trend-short model, and a range mean-reversion model. Each sub-model produces a
+signed weight, then the final target is the clipped sum of those weights.
 
-The strategy uses only replayable intraday futures bars in the uploaded code
-path. Private research files, local databases, and raw optimization inputs are
-not included in the upload package.
+The uploaded package uses only replayable intraday futures OHLCV bars. It does
+not read local databases, API keys, private research files, direct exchange
+SDKs, or HTTP clients.
 
 ## Entry 开仓
 
-The Playbook opens a short signal when bearish trend alignment, medium-term
-momentum, broader trend position, rebound filtering, and volatility checks
-agree. The trend floor is expressed as a target exposure, not as a fixed order
-size. Short exposure is dominant, while the long path is capped and only used
-when the broader recovery structure confirms.
+The trend-long model can hold a long base when broader upside alignment is
+healthy. It can also add a dynamic long component when the same broader trend
+has either short-term acceleration or a controlled pullback that still looks
+constructive.
 
-If the bearish regime is not confirmed, the strategy emits hold. It does not
-short every dip, and it avoids entries when the rebound filter suggests the
-market has already recovered enough to invalidate the short setup.
+The trend-short model can hold a short base when downside alignment and weak
+momentum are clear. It can also add a smaller dynamic short component during a
+breakdown, a rebound failure, or a higher-volatility bearish structure.
+
+The range model is active only when neither trend side is dominant. It fades
+channel extremes with smaller flexible weights: lower-channel weakness can
+produce a long component, while upper-channel strength can produce a short
+component. A gently rising channel makes range longs easier and slightly
+larger; a gently falling channel does the same for range shorts.
 
 ## Exit 平仓
 
-A short signal closes when bearish alignment fades, momentum no longer confirms
-the move, price recovers into the broader trend reference, or
-volatility-adjusted sizing no longer supports exposure. Long exposure closes
-when the recovery trend no longer confirms.
+The strategy exits by reducing or removing the target weight. Long exposure
+falls when upside alignment fades, the pullback setup stops being constructive,
+or volatility-adjusted sizing no longer supports the position. Short exposure
+falls when bearish alignment fades, rebound pressure invalidates the setup, or
+price leaves the lower-risk short zone. Range positions close when price moves
+away from the channel extreme or a clearer trend regime takes over.
 
-This package emits managed signals and includes a simplified deterministic
-historical replay path for GetAgent Cloud validation. It is compatible with
-managed follow-trade deployment, while the historical path uses replayed target
-position adjustments inside the platform backtest engine. The Cloud replay
-fetches pre-roll history before the trading window so trend and volatility
-features are already formed when live trading begins. Risk control comes from
-regime withdrawal, volatility-aware sizing, exchange minimum-lot rounding, and
-hard caps on target exposure.
+The Cloud replay fetches pre-roll history before the trade window so moving
+trend and volatility features are already formed when trading begins. Orders in
+the backtest are target-position adjustments, not isolated fixed-size entries.
 
-## Parameters 参数
+## Parameters
 
-Subscribers can tune leverage, margin budget, timeframe, aggressiveness, weight
-scale, maximum signal weight, max short weight, max long weight, trend
-lookbacks, short floor cap, long floor cap, short target volatility, and
-volatility ceiling.
+Subscribers can tune leverage, margin budget, timeframe, aggressiveness,
+overall weight scale, maximum signal weight, maximum short weight, maximum long
+weight, trend lookbacks, short and long exposure caps, and volatility filters.
 
-Higher leverage amplifies both gains and drawdowns. Margin budget controls the
-capital base used by the platform for sizing and return interpretation. Higher
-aggressiveness makes the model act earlier. Higher weight scale and exposure
-caps allow larger signals in confirmed regimes. Lower volatility ceiling makes
-the model more selective during unstable periods. The Cloud replay recalculates
-the desired BTC quantity on every 4h bar and adjusts only when the target
-change is large enough to clear exchange lot-size constraints.
+Higher leverage amplifies both gains and drawdowns without making the signal
+more selective. Margin budget controls the capital base used by the platform
+for sizing and return interpretation. Higher aggressiveness makes the model act
+earlier; lower aggressiveness makes it wait for cleaner confirmation. Higher
+exposure caps permit larger positions in confirmed regimes, while lower caps
+make the strategy more defensive.
 
-## Local Research Context 回测指标如何读
+## Costs And Slippage
 
-The selected local candidate is a 4h short trend floor configuration with a
-conservative weight scale. It was selected because it passed the hard filter on
-local splits: annualized return above 20% and max drawdown below 6% on both
-validation and locked-test windows.
+The package declares maker and taker fees in `backtest.yaml`, so GetAgent Cloud
+can include exchange trading fees in the replay. Real trading losses are not
+limited to fees. They can also include bid-ask spread, slippage, funding rates,
+latency, order rejection or partial fill behavior, liquidation constraints,
+and differences between platform K-lines and the venue where orders execute.
+This version does not model those extra losses directly in package code.
 
-Local result for selected candidate `source_rank=1`, `weight_scale=1.40`:
+## Local Research Context
 
-- validation: annual return about 20.03%, total return about 18.18%, max drawdown about -4.66%, Sharpe about 1.57
-- locked_test: annual return about 88.38%, total return about 25.52%, max drawdown about -3.01%, Sharpe about 3.75
-- train: annual return about 0.54%, max drawdown about -7.89%
+The frozen `research_snapshot/` files are local research evidence, not official
+GetAgent Cloud metrics. The selected frozen candidate remains reproducible with
+`scripts/reproduce_metrics.py`, but the current Cloud package has been evolved
+into a composite long/short/range model, so platform results should be read
+from the GetAgent strategy card after each run.
 
-These are local research results with a 6 bps turnover cost assumption. The
-GetAgent package also contains a Cloud backtest path under `backtest_support:
-full`; Cloud results may differ because they use the platform K-line provider,
-the platform replay engine, and Nautilus execution assumptions. The current
-Cloud package is designed to approximate a low average exposure target-position
-model rather than a fixed-size short-entry model.
+Local approximate testing on the same Cloud-style window was used to select the
+current default composite parameters. Those local checks are useful for
+iteration, but they are not a substitute for Cloud replay evidence.
 
 ## Risk 风险
 
-The main risk is a sharp BTC rebound after a short signal or a failed recovery
-after a long signal. The strategy can also underperform in choppy ranges,
-news-driven gaps, exchange slippage, funding stress, and regimes where momentum
-decays before the model exits. Past local performance is not a guarantee of
-live profitability.
+The main risks are sharp BTC reversals, choppy ranges that repeatedly flip
+regime, major news gaps, unstable liquidity, high funding dislocation, and live
+execution costs that are larger than the replay assumptions. Historical results
+do not guarantee live profitability.
