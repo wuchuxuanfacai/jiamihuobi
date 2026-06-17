@@ -60,6 +60,14 @@ strategy_config:
   max_long_weight: 0.0
   vol_ceiling: 0.35
   vol_floor_min: 0.20
+  high_vol_floor: 0.40
+  high_vol_ceiling: 0.55
+  high_vol_bear_on: 0.42
+  high_vol_sma_mult: 1.02
+  high_vol_target_vol: 0.50
+  high_vol_short_cap: 1.00
+  high_vol_short_base: 0.65
+  high_vol_short_conf: 0.00
   target_step_weight: 0.02
   min_trade_size: "0.001"
   cloud_fetch_start: "2025-11-01T00:00:00Z"
@@ -100,13 +108,13 @@ user_config_schema:
     label: "Signal timeframe"
   aggressiveness:
     type: number
-    default: 1.2
+    default: 1.0
     min: 0.5
     max: 1.5
     label: "Signal aggressiveness"
   weight_scale:
     type: number
-    default: 1.0
+    default: 1.2
     min: 0.5
     max: 2.0
     label: "Weight scale"
@@ -148,19 +156,19 @@ user_config_schema:
     label: "Slow trend lookback"
   long_trend_days:
     type: number
-    default: 21
+    default: 45
     min: 7
     max: 180
     label: "Long trend lookback"
   bear_on:
     type: number
-    default: 0.48
+    default: 0.42
     min: 0.4
     max: 0.9
     label: "Bear trend threshold"
   short_floor_cap:
     type: number
-    default: 1.00
+    default: 1.60
     min: 0.0
     max: 2.0
     label: "Short floor cap"

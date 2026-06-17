@@ -119,6 +119,14 @@ def _effective_spec(config: dict[str, Any]) -> dict[str, Any]:
         "weight_scale": _as_float(config.get("weight_scale"), strategy_config.get("weight_scale", 1.2)),
         "vol_ceiling": _as_float(config.get("vol_ceiling"), strategy_config.get("vol_ceiling", 0.35)),
         "vol_floor_min": _as_float(config.get("vol_floor_min"), strategy_config.get("vol_floor_min", 0.20)),
+        "high_vol_floor": _as_float(config.get("high_vol_floor"), strategy_config.get("high_vol_floor", 0.40)),
+        "high_vol_ceiling": _as_float(config.get("high_vol_ceiling"), strategy_config.get("high_vol_ceiling", 0.55)),
+        "high_vol_bear_on": _as_float(config.get("high_vol_bear_on"), strategy_config.get("high_vol_bear_on", 0.42)),
+        "high_vol_sma_mult": _as_float(config.get("high_vol_sma_mult"), strategy_config.get("high_vol_sma_mult", 1.02)),
+        "high_vol_target_vol": _as_float(config.get("high_vol_target_vol"), strategy_config.get("high_vol_target_vol", 0.50)),
+        "high_vol_short_cap": _as_float(config.get("high_vol_short_cap"), strategy_config.get("high_vol_short_cap", 1.0)),
+        "high_vol_short_base": _as_float(config.get("high_vol_short_base"), strategy_config.get("high_vol_short_base", 0.65)),
+        "high_vol_short_conf": _as_float(config.get("high_vol_short_conf"), strategy_config.get("high_vol_short_conf", 0.0)),
     }
     strategy_config.update(mapped)
     trade_start = str(config.get("cloud_trade_start") or strategy_config.get("trade_start") or "")

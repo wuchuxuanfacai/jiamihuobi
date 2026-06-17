@@ -43,6 +43,14 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     weight_scale: float = 1.2
     vol_ceiling: float = 0.35
     vol_floor_min: float = 0.20
+    high_vol_floor: float = 0.40
+    high_vol_ceiling: float = 0.55
+    high_vol_bear_on: float = 0.42
+    high_vol_sma_mult: float = 1.02
+    high_vol_target_vol: float = 0.50
+    high_vol_short_cap: float = 1.0
+    high_vol_short_base: float = 0.65
+    high_vol_short_conf: float = 0.0
     trade_start: str = ""
 
 
@@ -115,13 +123,22 @@ class AdaptiveShortTrendStrategy(Strategy):
             and not rebound_blocked
             and realized_vol <= self.cfg.vol_ceiling
         )
+        high_vol_short_ok = (
+            not short_ok
+            and realized_vol > self.cfg.high_vol_floor
+            and realized_vol <= self.cfg.high_vol_ceiling
+            and bear_strength >= self.cfg.high_vol_bear_on
+            and weak_momentum
+            and latest < sma_long * self.cfg.high_vol_sma_mult
+            and not rebound_blocked
+        )
 
         instrument = self._instrument
         if instrument is None:
             return
         if self._trade_start_ns and int(bar.ts_event) < self._trade_start_ns:
             return
-        target_weight = self._target_weight(short_ok, bear_strength, realized_vol)
+        target_weight = self._target_weight(short_ok, high_vol_short_ok, bear_strength, realized_vol)
         target_qty = self._target_short_qty(target_weight, latest)
         current_qty = self._current_signed_qty(instrument.id)
         delta_qty = target_qty - current_qty
@@ -150,18 +167,25 @@ class AdaptiveShortTrendStrategy(Strategy):
         )
         self.submit_order(order)
 
-    def _target_weight(self, short_ok: bool, bear_strength: float, realized_vol: float) -> float:
-        if not short_ok:
+    def _target_weight(
+        self,
+        short_ok: bool,
+        high_vol_short_ok: bool,
+        bear_strength: float,
+        realized_vol: float,
+    ) -> float:
+        if not short_ok and not high_vol_short_ok:
             return 0.0
         safe_vol = max(float(realized_vol), float(self.cfg.vol_floor_min))
-        bear_conf = min(
-            1.0,
-            max(0.0, (bear_strength - self.cfg.bear_on) / max(1.0 - self.cfg.bear_on, 1e-9)),
-        )
+        threshold = self.cfg.bear_on if short_ok else self.cfg.high_vol_bear_on
+        bear_conf = min(1.0, max(0.0, (bear_strength - threshold) / max(1.0 - threshold, 1e-9)))
+        target_vol = self.cfg.short_target_vol if short_ok else self.cfg.high_vol_target_vol
+        short_cap = self.cfg.short_floor_cap if short_ok else self.cfg.high_vol_short_cap
+        short_base = self.cfg.short_base if short_ok else self.cfg.high_vol_short_base
+        short_conf = self.cfg.short_conf if short_ok else self.cfg.high_vol_short_conf
         raw = -min(
-            float(self.cfg.short_floor_cap),
-            (float(self.cfg.short_target_vol) / safe_vol)
-            * (float(self.cfg.short_base) + float(self.cfg.short_conf) * bear_conf),
+            float(short_cap),
+            (float(target_vol) / safe_vol) * (float(short_base) + float(short_conf) * bear_conf),
         )
         scaled = raw * float(self.cfg.weight_scale)
         return max(-float(self.cfg.max_short_weight), min(0.0, scaled))

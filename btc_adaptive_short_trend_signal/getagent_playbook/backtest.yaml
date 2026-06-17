@@ -36,6 +36,14 @@ strategy:
     weight_scale: 1.2
     vol_ceiling: 0.35
     vol_floor_min: 0.20
+    high_vol_floor: 0.40
+    high_vol_ceiling: 0.55
+    high_vol_bear_on: 0.42
+    high_vol_sma_mult: 1.02
+    high_vol_target_vol: 0.50
+    high_vol_short_cap: 1.0
+    high_vol_short_base: 0.65
+    high_vol_short_conf: 0.0
     trade_start: "2026-03-03T00:00:00Z"
 
 execution:

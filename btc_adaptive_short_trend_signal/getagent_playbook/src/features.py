@@ -141,17 +141,37 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
         and not rebound_blocked
         and vol <= _as_float(config.get("vol_ceiling"), 9.0)
     )
+    high_vol_bear = _as_float(config.get("high_vol_bear_on"), 0.42)
+    high_vol_short_ok = (
+        max_short_weight > 0.0
+        and not short_ok
+        and vol > _as_float(config.get("high_vol_floor"), 0.40)
+        and vol <= _as_float(config.get("high_vol_ceiling"), 0.55)
+        and latest_bear >= high_vol_bear
+        and weak_momentum
+        and last_close < latest_sma_long * _as_float(config.get("high_vol_sma_mult"), 1.02)
+        and not rebound_blocked
+    )
     bear_conf = min(1.0, max(0.0, (latest_bear - bear_threshold) / max(1.0 - bear_threshold, 1e-9)))
     short_base = _as_float(config.get("short_base"), 0.65)
     short_conf = _as_float(config.get("short_conf"), 0.55)
-    short_floor = -min(short_cap, (short_target_vol / vol) * (short_base + short_conf * bear_conf)) if short_ok else 0.0
+    high_vol_conf = min(1.0, max(0.0, (latest_bear - high_vol_bear) / max(1.0 - high_vol_bear, 1e-9)))
+    high_vol_floor = -min(
+        min(max(_as_float(config.get("high_vol_short_cap"), 1.0), 0.0), max_short_weight),
+        (_as_float(config.get("high_vol_target_vol"), 0.50) / vol)
+        * (
+            _as_float(config.get("high_vol_short_base"), 0.65)
+            + _as_float(config.get("high_vol_short_conf"), 0.0) * high_vol_conf
+        ),
+    ) if high_vol_short_ok else 0.0
+    short_floor = -min(short_cap, (short_target_vol / vol) * (short_base + short_conf * bear_conf)) if short_ok else high_vol_floor
     long_floor = 0.0
 
     raw_target = float(np.clip((short_floor + long_floor) * weight_scale, -max_short_weight, max_long_weight))
-    if short_ok:
+    if short_ok or high_vol_short_ok:
         action = "short"
         confidence = min(0.95, 0.50 + 0.45 * latest_bear)
-        regime = "short_trend_floor"
+        regime = "short_trend_floor" if short_ok else "high_vol_small_short"
     else:
         action = "hold"
         confidence = 0.50
@@ -175,6 +195,8 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
         "slow_window": int(slow_window),
         "long_window": int(long_window),
         "short_trend_floor": short_floor,
+        "high_vol_short_ok": bool(high_vol_short_ok),
+        "high_vol_floor": high_vol_floor,
         "long_trend_floor": long_floor,
         "weight_scale": weight_scale,
         "target_weight": raw_target,
