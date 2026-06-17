@@ -52,7 +52,7 @@ def compute_signal_state(
     slow_window = _window(config, "slow_window", "slow_trend_days", bars_per_day, 12)
     long_window = _window(config, "long_window", "long_trend_days", bars_per_day, 24)
     vol_window = _window(config, "vol_window", "vol_days", bars_per_day, 6)
-    required_rows = max(fast_window, mid_window, slow_window, long_window, vol_window) + 2
+    required_rows = max(fast_window, mid_window, slow_window, vol_window) + 2
     if len(values) < required_rows:
         return SignalState(
             target_weight=0.0,
@@ -67,10 +67,11 @@ def compute_signal_state(
         )
 
     latest = float(values[-1])
+    long_rows_used = min(long_window, len(values))
     sma_fast = float(np.mean(values[-fast_window:]))
     sma_mid = float(np.mean(values[-mid_window:]))
     sma_slow = float(np.mean(values[-slow_window:]))
-    sma_long = float(np.mean(values[-long_window:]))
+    sma_long = float(np.mean(values[-long_rows_used:]))
     ret_fast = latest / float(values[-fast_window]) - 1.0
     ret_mid = latest / float(values[-mid_window]) - 1.0
     ret_slow = latest / float(values[-slow_window]) - 1.0
@@ -234,6 +235,10 @@ def compute_signal_state(
         elif channel_z >= short_entry:
             depth = _clip((abs(channel_z) - short_entry) / max(range_entry, 1e-9), 0.0, 1.0)
             range_mean_reversion = -min(range_cap * short_size_mult, range_cap * (0.35 + 0.65 * depth) * short_size_mult)
+        if range_mean_reversion:
+            range_floor = min(range_cap, _as_float(config.get("range_min_component"), 0.0))
+            if range_floor > 0.0 and abs(range_mean_reversion) < range_floor:
+                range_mean_reversion = float(np.sign(range_mean_reversion) * range_floor)
 
     raw_sum = trend_long_base + trend_long_dynamic + trend_short_base + trend_short_dynamic + range_mean_reversion
     target_weight = _clip(raw_sum * weight_scale, -max_short_weight, max_long_weight)
@@ -287,6 +292,7 @@ def compute_signal_state(
             "mid_window": int(mid_window),
             "slow_window": int(slow_window),
             "long_window": int(long_window),
+            "long_rows_used": int(long_rows_used),
             "vol_window": int(vol_window),
             "trend_long_base": trend_long_base,
             "trend_long_dynamic": trend_long_dynamic,

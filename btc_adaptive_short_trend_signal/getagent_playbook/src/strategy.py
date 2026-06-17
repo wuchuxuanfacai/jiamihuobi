@@ -85,7 +85,8 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     channel_slope_deadband: float = 0.00313
     range_bias_strength: float = 0.54640
     channel_slope_window: int = 45
-    range_mr_cap: float = 0.04855
+    range_mr_cap: float = 0.12000
+    range_min_component: float = 0.08000
     range_z_entry: float = 0.65902
     range_trend_max: float = 0.72880
     range_bear_max: float = 0.56401
@@ -117,7 +118,13 @@ class AdaptiveShortTrendStrategy(Strategy):
     def on_bar(self, bar: Bar) -> None:
         close = float(bar.close)
         self._closes.append(close)
-        if len(self._closes) < self.cfg.long_window + 2:
+        min_ready = max(
+            self.cfg.fast_window,
+            self.cfg.mid_window,
+            self.cfg.slow_window,
+            self.cfg.vol_window,
+        ) + 2
+        if len(self._closes) < min_ready:
             return
 
         values = np.asarray(self._closes, dtype=float)
@@ -259,6 +266,7 @@ class AdaptiveShortTrendStrategy(Strategy):
             "range_bias_strength",
             "channel_slope_window",
             "range_mr_cap",
+            "range_min_component",
             "range_z_entry",
             "range_trend_max",
             "range_bear_max",
