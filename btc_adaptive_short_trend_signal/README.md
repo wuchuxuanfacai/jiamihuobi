@@ -64,7 +64,7 @@ meet the target.
 ```text
 name: btc-adaptive-short-trend-signal
 backtest_support: full
-execution_mode: signal_only
+execution_mode: follow_trade
 ```
 
 The package includes `backtest.yaml` and a Nautilus strategy class so GetAgent

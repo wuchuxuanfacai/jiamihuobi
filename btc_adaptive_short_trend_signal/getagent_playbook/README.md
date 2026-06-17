@@ -30,11 +30,11 @@ the move, price recovers into the broader trend reference, or
 volatility-adjusted sizing no longer supports exposure. A long signal closes
 when upside confirmation disappears.
 
-This package emits signals and also includes a simplified deterministic
-historical replay path for GetAgent Cloud validation. It does not place fixed
-take-profit or stop-loss orders on the exchange in signal mode. Risk control
-comes from regime withdrawal, volatility-aware sizing, and hard caps on target
-exposure.
+This package emits managed signals and includes a simplified deterministic
+historical replay path for GetAgent Cloud validation. It is compatible with
+managed follow-trade deployment, while the historical path uses replayed orders
+inside the platform backtest engine. Risk control comes from regime withdrawal,
+volatility-aware sizing, and hard caps on target exposure.
 
 ## Parameters 参数
 

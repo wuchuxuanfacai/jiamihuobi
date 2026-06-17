@@ -7,7 +7,7 @@ long_description: |
 
   Entry decisions are based on price action, trend alignment, momentum persistence, recent volatility, and whether a rebound has already become strong enough to invalidate the short setup. The strategy opens short when several downside checks agree and price remains below its broader trend reference. It can open long only when a subscriber allows long exposure and the market has recovered into a constructive structure. When neither side is sufficiently confirmed, the Playbook emits a hold signal rather than forcing a trade.
 
-  Exits work by withdrawal of regime confirmation. A short signal closes when bearish alignment fades, momentum stops confirming, price recovers into the trend reference, or volatility-adjusted sizing no longer justifies exposure. A long signal closes when upside confirmation weakens. This signal-only version does not place fixed take profit or stop loss orders; its practical stop is the disappearance of the regime that caused the signal.
+  Exits work by withdrawal of regime confirmation. A short signal closes when bearish alignment fades, momentum stops confirming, price recovers into the trend reference, or volatility-adjusted sizing no longer justifies exposure. A long signal closes when upside confirmation weakens. The Playbook is compatible with managed follow-trade deployment, while historical validation uses a deterministic replay of the same price-regime logic.
 
   Subscribers can tune leverage, margin budget, signal aggressiveness, maximum signal weight, short exposure cap, optional long exposure cap, and volatility scaling. Higher leverage amplifies both upside and drawdown without improving signal quality. Margin budget controls the capital base used for sizing and return interpretation. Raising aggressiveness makes the model act earlier, while lowering it makes signals more selective. Raising exposure caps allows larger signals in confirmed regimes; lowering them makes the strategy more defensive.
 
@@ -21,8 +21,8 @@ schedule:
 decision_mode: deterministic
 backtest_support: full
 runtime_profile: deterministic
-execution_mode: signal_only
-follow_trade_supported: false
+execution_mode: follow_trade
+follow_trade_supported: true
 
 strategy_config:
   trading_symbols: ["BTCUSDT"]
