@@ -15,25 +15,25 @@ strategy:
     margin_budget: "1000"
     min_trade_size: "0.001"
     target_step_weight: 0.02
-    fast_window: 30
-    mid_window: 60
-    slow_window: 126
-    long_window: 126
+    fast_window: 12
+    mid_window: 42
+    slow_window: 84
+    long_window: 270
     vol_window: 60
-    bear_on: 0.48
+    bear_on: 0.42
     bear_off: 0.30
-    ret_slow_max: -0.02
-    ret_mid_max: -0.02
-    short_sma_mult: 1.02
+    ret_slow_max: -0.04
+    ret_mid_max: 0.01
+    short_sma_mult: 1.03
     mid_sma_mult: 1.0
-    rebound_ret_max: 0.055
-    rebound_sma_mult: 1.015
-    short_target_vol: 0.55
-    short_floor_cap: 1.0
-    max_short_weight: 1.0
-    short_base: 0.35
-    short_conf: 0.65
-    weight_scale: 1.0
+    rebound_ret_max: 0.04
+    rebound_sma_mult: 1.005
+    short_target_vol: 1.20
+    short_floor_cap: 1.6
+    max_short_weight: 1.6
+    short_base: 0.65
+    short_conf: 0.55
+    weight_scale: 1.2
     vol_ceiling: 0.35
     vol_floor_min: 0.20
     trade_start: "2026-03-03T00:00:00Z"

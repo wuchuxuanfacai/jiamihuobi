@@ -31,26 +31,26 @@ strategy_config:
   timeframe: "4h"
   history_days: 220
   aggressiveness: 1.0
-  weight_scale: 1.0
-  fast_trend_days: 5
-  mid_trend_days: 10
-  slow_trend_days: 21
-  long_trend_days: 21
+  weight_scale: 1.2
+  fast_trend_days: 2
+  mid_trend_days: 7
+  slow_trend_days: 14
+  long_trend_days: 45
   vol_days: 10
-  bear_on: 0.48
+  bear_on: 0.42
   bear_off: 0.30
-  ret_slow_max: -0.02
-  ret_mid_max: -0.02
-  short_sma_mult: 1.02
+  ret_slow_max: -0.04
+  ret_mid_max: 0.01
+  short_sma_mult: 1.03
   mid_sma_mult: 1.0
-  rebound_ret_max: 0.055
-  rebound_sma_mult: 1.015
-  short_target_vol: 0.55
-  short_floor_cap: 1.00
-  short_base: 0.35
-  short_conf: 0.65
-  max_short_weight: 1.00
-  max_signal_weight: 1.00
+  rebound_ret_max: 0.04
+  rebound_sma_mult: 1.005
+  short_target_vol: 1.20
+  short_floor_cap: 1.60
+  short_base: 0.65
+  short_conf: 0.55
+  max_short_weight: 1.60
+  max_signal_weight: 1.60
   trend_on: 0.68
   ret_slow_min: 0.0
   ret_mid_min: 0.0
@@ -100,7 +100,7 @@ user_config_schema:
     label: "Signal timeframe"
   aggressiveness:
     type: number
-    default: 1.0
+    default: 1.2
     min: 0.5
     max: 1.5
     label: "Signal aggressiveness"
@@ -112,13 +112,13 @@ user_config_schema:
     label: "Weight scale"
   max_signal_weight:
     type: number
-    default: 1.00
+    default: 1.60
     min: 0.01
     max: 2.0
     label: "Max signal weight"
   max_short_weight:
     type: number
-    default: 1.00
+    default: 1.60
     min: 0.0
     max: 2.0
     label: "Max short weight"
@@ -130,19 +130,19 @@ user_config_schema:
     label: "Max long weight"
   fast_trend_days:
     type: number
-    default: 5
+    default: 2
     min: 1
     max: 14
     label: "Fast trend lookback"
   mid_trend_days:
     type: number
-    default: 10
+    default: 7
     min: 1
     max: 30
     label: "Middle trend lookback"
   slow_trend_days:
     type: number
-    default: 21
+    default: 14
     min: 3
     max: 90
     label: "Slow trend lookback"
@@ -166,7 +166,7 @@ user_config_schema:
     label: "Short floor cap"
   short_target_vol:
     type: number
-    default: 0.55
+    default: 1.20
     min: 0.01
     max: 1.2
     label: "Short target volatility"

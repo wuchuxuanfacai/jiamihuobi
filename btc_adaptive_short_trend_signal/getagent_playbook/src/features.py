@@ -104,12 +104,12 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
     ) / 7.0
 
     aggr = max(_as_float(config.get("aggressiveness"), 1.0), 0.1)
-    weight_scale = min(max(_as_float(config.get("weight_scale"), 1.0), 0.1), 2.0)
-    max_signal_weight = min(max(_as_float(config.get("max_signal_weight"), 1.0), 0.01), 2.0)
-    max_short_weight = min(max(_as_float(config.get("max_short_weight"), 1.0), 0.0), max_signal_weight)
+    weight_scale = min(max(_as_float(config.get("weight_scale"), 1.2), 0.1), 2.0)
+    max_signal_weight = min(max(_as_float(config.get("max_signal_weight"), 1.6), 0.01), 2.0)
+    max_short_weight = min(max(_as_float(config.get("max_short_weight"), 1.6), 0.0), max_signal_weight)
     max_long_weight = 0.0
     short_cap = min(max(_as_float(config.get("short_floor_cap"), 1.0), 0.0), max_short_weight)
-    short_target_vol = min(max(_as_float(config.get("short_target_vol"), 0.55), 0.01), 1.20)
+    short_target_vol = min(max(_as_float(config.get("short_target_vol"), 1.20), 0.01), 1.20)
     long_cap = min(max(_as_float(config.get("long_floor_cap"), 0.10), 0.0), max_long_weight)
     long_target_vol = 0.0
     vol = max(_as_float(realized_vol.iloc[-1], 0.20), _as_float(config.get("vol_floor_min"), 0.20))
@@ -125,25 +125,25 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
 
     bear_threshold = _as_float(config.get("bear_on"), 0.48) / aggr
     weak_momentum = (
-        latest_ret_mid < _as_float(config.get("ret_mid_max"), -0.02)
-        or latest_ret_slow < _as_float(config.get("ret_slow_max"), -0.02)
+        latest_ret_mid < _as_float(config.get("ret_mid_max"), 0.01)
+        or latest_ret_slow < _as_float(config.get("ret_slow_max"), -0.04)
         or last_close < latest_sma_mid * _as_float(config.get("mid_sma_mult"), 1.0)
     )
     rebound_blocked = (
-        latest_ret_fast > _as_float(config.get("rebound_ret_max"), 0.055)
-        and last_close > latest_sma_fast * _as_float(config.get("rebound_sma_mult"), 1.015)
+        latest_ret_fast > _as_float(config.get("rebound_ret_max"), 0.04)
+        and last_close > latest_sma_fast * _as_float(config.get("rebound_sma_mult"), 1.005)
     )
     short_ok = (
         max_short_weight > 0.0
         and latest_bear >= bear_threshold
         and weak_momentum
-        and last_close < latest_sma_long * _as_float(config.get("short_sma_mult"), 1.02)
+        and last_close < latest_sma_long * _as_float(config.get("short_sma_mult"), 1.03)
         and not rebound_blocked
         and vol <= _as_float(config.get("vol_ceiling"), 9.0)
     )
     bear_conf = min(1.0, max(0.0, (latest_bear - bear_threshold) / max(1.0 - bear_threshold, 1e-9)))
-    short_base = _as_float(config.get("short_base"), 0.35)
-    short_conf = _as_float(config.get("short_conf"), 0.65)
+    short_base = _as_float(config.get("short_base"), 0.65)
+    short_conf = _as_float(config.get("short_conf"), 0.55)
     short_floor = -min(short_cap, (short_target_vol / vol) * (short_base + short_conf * bear_conf)) if short_ok else 0.0
     long_floor = 0.0
 
