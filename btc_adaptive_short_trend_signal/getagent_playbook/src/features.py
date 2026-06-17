@@ -123,36 +123,35 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
     latest_sma_mid = _as_float(sma_mid.iloc[-1], last_close)
     latest_sma_long = _as_float(sma_long.iloc[-1], last_close)
 
-    bear_threshold = _as_float(config.get("bear_on"), 0.56) / aggr
+    bear_threshold = _as_float(config.get("bear_on"), 0.48) / aggr
+    weak_momentum = (
+        latest_ret_mid < _as_float(config.get("ret_mid_max"), 0.01)
+        or latest_ret_slow < _as_float(config.get("ret_slow_max"), 0.02)
+        or last_close < latest_sma_mid * _as_float(config.get("mid_sma_mult"), 1.005)
+    )
+    rebound_blocked = (
+        latest_ret_fast > _as_float(config.get("rebound_ret_max"), 0.055)
+        and last_close > latest_sma_fast * _as_float(config.get("rebound_sma_mult"), 1.015)
+    )
     short_ok = (
         max_short_weight > 0.0
         and latest_bear >= bear_threshold
-        and latest_ret_slow < _as_float(config.get("ret_slow_max"), -0.08)
-        and latest_ret_mid < _as_float(config.get("ret_mid_max"), -0.04)
-        and last_close < latest_sma_long * _as_float(config.get("short_sma_mult"), 0.98)
-        and last_close < latest_sma_fast * _as_float(config.get("fast_sma_mult"), 1.00)
-        and latest_ret_fast < _as_float(config.get("rebound_ret_max"), 0.08)
+        and weak_momentum
+        and last_close < latest_sma_long * _as_float(config.get("short_sma_mult"), 1.01)
+        and not rebound_blocked
         and vol <= _as_float(config.get("vol_ceiling"), 9.0)
     )
-    trend_threshold = _as_float(config.get("trend_on"), 0.68) / aggr
-    long_ok = False
-
     bear_conf = min(1.0, max(0.0, (latest_bear - bear_threshold) / max(1.0 - bear_threshold, 1e-9)))
-    long_conf = min(1.0, max(0.0, (latest_trend - trend_threshold) / max(1.0 - trend_threshold, 1e-9)))
     short_base = _as_float(config.get("short_base"), 0.65)
     short_conf = _as_float(config.get("short_conf"), 0.55)
     short_floor = -min(short_cap, (short_target_vol / vol) * (short_base + short_conf * bear_conf)) if short_ok else 0.0
-    long_floor = min(long_cap, (long_target_vol / vol) * (0.45 + 0.55 * long_conf)) if long_ok else 0.0
+    long_floor = 0.0
 
     raw_target = float(np.clip((short_floor + long_floor) * weight_scale, -max_short_weight, max_long_weight))
-    if short_ok and not long_ok:
+    if short_ok:
         action = "short"
         confidence = min(0.95, 0.50 + 0.45 * latest_bear)
         regime = "short_trend_floor"
-    elif long_ok and not short_ok:
-        action = "long"
-        confidence = min(0.95, 0.50 + 0.45 * latest_trend)
-        regime = "countertrend_long_filter"
     else:
         action = "hold"
         confidence = 0.50
@@ -179,6 +178,8 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
         "long_trend_floor": long_floor,
         "weight_scale": weight_scale,
         "target_weight": raw_target,
+        "weak_momentum": bool(weak_momentum),
+        "rebound_blocked": bool(rebound_blocked),
     }
     meta = {
         "regime": regime,

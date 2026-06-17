@@ -13,22 +13,24 @@ strategy:
   config:
     order_id_tag: "001"
     trade_size: "0.001"
-    fast_window: 18
-    mid_window: 60
-    slow_window: 180
-    long_window: 360
-    vol_window: 60
-    bear_on: 0.56
-    ret_slow_max: -0.08
-    ret_mid_max: -0.04
-    short_sma_mult: 0.98
-    fast_sma_mult: 1.00
-    rebound_ret_max: 0.08
+    fast_window: 6
+    mid_window: 18
+    slow_window: 60
+    long_window: 126
+    vol_window: 30
+    bear_on: 0.48
+    bear_off: 0.30
+    ret_slow_max: 0.02
+    ret_mid_max: 0.01
+    ret_mid_exit: 0.04
+    short_sma_mult: 1.01
+    mid_sma_mult: 1.005
+    rebound_ret_max: 0.055
+    rebound_sma_mult: 1.015
+    exit_sma_mult: 1.025
     vol_ceiling: 0.45
-
-execution:
-  start: "2026-03-01T00:00:00Z"
-  end: "2026-06-01T00:00:00Z"
+    min_hold_bars: 3
+    max_hold_bars: 18
 
 instrument:
   id: BTCUSDT.BINANCE

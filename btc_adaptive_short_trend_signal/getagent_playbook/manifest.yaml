@@ -32,17 +32,21 @@ strategy_config:
   history_days: 90
   aggressiveness: 1.0
   weight_scale: 1.4
-  fast_trend_days: 3
-  mid_trend_days: 10
-  slow_trend_days: 30
-  long_trend_days: 90
-  vol_days: 10
-  bear_on: 0.56
-  ret_slow_max: -0.08
-  ret_mid_max: -0.04
-  short_sma_mult: 0.98
-  fast_sma_mult: 1.00
-  rebound_ret_max: 0.08
+  fast_trend_days: 1
+  mid_trend_days: 3
+  slow_trend_days: 10
+  long_trend_days: 21
+  vol_days: 5
+  bear_on: 0.48
+  bear_off: 0.30
+  ret_slow_max: 0.02
+  ret_mid_max: 0.01
+  ret_mid_exit: 0.04
+  short_sma_mult: 1.01
+  mid_sma_mult: 1.005
+  rebound_ret_max: 0.055
+  rebound_sma_mult: 1.015
+  exit_sma_mult: 1.025
   short_target_vol: 0.35
   short_floor_cap: 1.00
   short_base: 0.65
@@ -58,6 +62,8 @@ strategy_config:
   max_long_weight: 0.0
   vol_ceiling: 0.45
   vol_floor_min: 0.20
+  min_hold_bars: 3
+  max_hold_bars: 18
   trade_size: "0.001"
 
 user_config_schema:
@@ -124,31 +130,31 @@ user_config_schema:
     label: "Max long weight"
   fast_trend_days:
     type: number
-    default: 3
+    default: 1
     min: 1
     max: 14
     label: "Fast trend lookback"
   mid_trend_days:
     type: number
-    default: 10
-    min: 3
+    default: 3
+    min: 1
     max: 30
     label: "Middle trend lookback"
   slow_trend_days:
     type: number
-    default: 30
-    min: 7
+    default: 10
+    min: 3
     max: 90
     label: "Slow trend lookback"
   long_trend_days:
     type: number
-    default: 90
-    min: 30
+    default: 21
+    min: 7
     max: 180
     label: "Long trend lookback"
   bear_on:
     type: number
-    default: 0.56
+    default: 0.48
     min: 0.4
     max: 0.9
     label: "Bear trend threshold"
@@ -176,3 +182,15 @@ user_config_schema:
     min: 0.1
     max: 9.0
     label: "Volatility ceiling"
+  min_hold_bars:
+    type: integer
+    default: 3
+    min: 1
+    max: 12
+    label: "Minimum hold bars"
+  max_hold_bars:
+    type: integer
+    default: 18
+    min: 6
+    max: 72
+    label: "Maximum hold bars"

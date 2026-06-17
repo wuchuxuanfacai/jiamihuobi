@@ -19,18 +19,24 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     bar_types: tuple[BarType, ...] = ()
     order_id_tag: str = "001"
     trade_size: str = "0.001"
-    fast_window: int = 18
-    mid_window: int = 60
-    slow_window: int = 180
-    long_window: int = 360
-    vol_window: int = 60
-    bear_on: float = 0.56
-    ret_slow_max: float = -0.08
-    ret_mid_max: float = -0.04
-    short_sma_mult: float = 0.98
-    fast_sma_mult: float = 1.00
-    rebound_ret_max: float = 0.08
+    fast_window: int = 6
+    mid_window: int = 18
+    slow_window: int = 60
+    long_window: int = 126
+    vol_window: int = 30
+    bear_on: float = 0.48
+    bear_off: float = 0.30
+    ret_slow_max: float = 0.02
+    ret_mid_max: float = 0.01
+    ret_mid_exit: float = 0.04
+    short_sma_mult: float = 1.01
+    mid_sma_mult: float = 1.005
+    rebound_ret_max: float = 0.055
+    rebound_sma_mult: float = 1.015
+    exit_sma_mult: float = 1.025
     vol_ceiling: float = 0.45
+    min_hold_bars: int = 3
+    max_hold_bars: int = 18
 
 
 class AdaptiveShortTrendStrategy(Strategy):
@@ -39,6 +45,7 @@ class AdaptiveShortTrendStrategy(Strategy):
         self.cfg = config
         self._closes: list[float] = []
         self._position: str = "NONE"
+        self._hold_bars: int = 0
         self._instrument: Optional[Instrument] = None
 
     def on_start(self) -> None:
@@ -86,14 +93,28 @@ class AdaptiveShortTrendStrategy(Strategy):
             + float(ret_slow < 0.0)
         ) / 7.0
 
+        weak_momentum = (
+            ret_mid < self.cfg.ret_mid_max
+            or ret_slow < self.cfg.ret_slow_max
+            or latest < sma_mid * self.cfg.mid_sma_mult
+        )
+        rebound_blocked = (
+            ret_fast > self.cfg.rebound_ret_max
+            and latest > sma_fast * self.cfg.rebound_sma_mult
+        )
         short_ok = (
             bear_strength >= self.cfg.bear_on
-            and ret_slow < self.cfg.ret_slow_max
-            and ret_mid < self.cfg.ret_mid_max
+            and weak_momentum
             and latest < sma_long * self.cfg.short_sma_mult
-            and latest < sma_fast * self.cfg.fast_sma_mult
-            and ret_fast < self.cfg.rebound_ret_max
+            and not rebound_blocked
             and realized_vol <= self.cfg.vol_ceiling
+        )
+        exit_short = (
+            bear_strength <= self.cfg.bear_off
+            or ret_mid > self.cfg.ret_mid_exit
+            or latest > sma_long * self.cfg.exit_sma_mult
+            or rebound_blocked
+            or realized_vol > self.cfg.vol_ceiling
         )
 
         instrument = self._instrument
@@ -104,15 +125,25 @@ class AdaptiveShortTrendStrategy(Strategy):
         has_open_position = self._has_open_position(instrument.id)
         if has_open_position and self._position == "NONE":
             self._position = "SHORT"
+            self._hold_bars = max(self._hold_bars, 1)
         elif not has_open_position and self._position == "SHORT":
             self._position = "NONE"
+            self._hold_bars = 0
+
+        if has_open_position:
+            self._hold_bars += 1
 
         if not has_open_position and short_ok:
             self._submit(instrument.id, OrderSide.SELL, qty)
             self._position = "SHORT"
-        elif has_open_position and not short_ok:
+            self._hold_bars = 0
+        elif has_open_position and (
+            self._hold_bars >= self.cfg.max_hold_bars
+            or (self._hold_bars >= self.cfg.min_hold_bars and exit_short)
+        ):
             self.close_all_positions(instrument.id)
             self._position = "NONE"
+            self._hold_bars = 0
 
     def _submit(
         self,

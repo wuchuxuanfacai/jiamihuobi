@@ -32,20 +32,25 @@ long entry path.
 This package emits managed signals and includes a simplified deterministic
 historical replay path for GetAgent Cloud validation. It is compatible with
 managed follow-trade deployment, while the historical path uses replayed orders
-inside the platform backtest engine. Risk control comes from regime withdrawal,
+inside the platform backtest engine. The Cloud replay uses shorter adaptive
+windows than the frozen research snapshot so a limited platform data window can
+still warm up and trade. Risk control comes from regime withdrawal,
 volatility-aware sizing, and hard caps on target exposure.
 
 ## Parameters 参数
 
 Subscribers can tune leverage, margin budget, timeframe, aggressiveness, weight
 scale, maximum signal weight, max short weight, trend lookbacks, short floor
-cap, short target volatility, and volatility ceiling.
+cap, short target volatility, volatility ceiling, and minimum or maximum hold
+bars.
 
 Higher leverage amplifies both gains and drawdowns. Margin budget controls the
 capital base used by the platform for sizing and return interpretation. Higher
 aggressiveness makes the model act earlier. Higher weight scale and exposure
 caps allow larger signals in confirmed regimes. Lower volatility ceiling makes
-the model more selective during unstable periods.
+the model more selective during unstable periods. Hold-bar limits make the
+Cloud replay re-evaluate short exposure regularly instead of leaving one
+position open for the whole weak regime.
 
 ## Local Research Context 回测指标如何读
 
