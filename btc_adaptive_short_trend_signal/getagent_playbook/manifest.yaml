@@ -64,6 +64,9 @@ strategy_config:
   vol_floor_min: 0.20
   min_hold_bars: 3
   max_hold_bars: 18
+  cloud_fetch_start: "2026-02-01T00:00:00Z"
+  cloud_trade_start: "2026-03-01T00:00:00Z"
+  cloud_fetch_end: "2026-06-01T00:00:00Z"
   trade_size: "0.001"
 
 user_config_schema:

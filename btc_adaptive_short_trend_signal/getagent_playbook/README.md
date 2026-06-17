@@ -34,7 +34,7 @@ historical replay path for GetAgent Cloud validation. It is compatible with
 managed follow-trade deployment, while the historical path uses replayed orders
 inside the platform backtest engine. The Cloud replay uses shorter adaptive
 windows than the frozen research snapshot so a limited platform data window can
-still warm up and trade. Risk control comes from regime withdrawal,
+still warm up before the official trading window starts. Risk control comes from regime withdrawal,
 volatility-aware sizing, and hard caps on target exposure.
 
 ## Parameters 参数

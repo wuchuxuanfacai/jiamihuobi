@@ -1,5 +1,8 @@
 import math
+from datetime import datetime, timedelta, timezone
 from typing import Any
+
+import pandas as pd
 
 from getagent import backtest, data, runtime
 
@@ -23,14 +26,90 @@ def _as_int(value: Any, default: int) -> int:
         return default
 
 
+def _parse_iso(value: Any) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _to_ms(value: datetime) -> int:
+    return int(value.timestamp() * 1000)
+
+
+def _fetch_replay_frame(
+    symbol: str,
+    interval: str,
+    start: datetime | None,
+    end: datetime | None,
+    history_days: int,
+) -> Any:
+    frames = []
+    if end is None:
+        end = datetime.now(timezone.utc)
+    if start is None:
+        start = end - timedelta(days=history_days)
+    cursor = start
+    while cursor < end:
+        chunk_end = min(cursor + timedelta(days=89), end)
+        bars = data.crypto.futures.kline(
+            symbol=symbol,
+            interval=interval,
+            exchange="bitget",
+            start_time=_to_ms(cursor),
+            end_time=_to_ms(chunk_end),
+        )
+        frame = backtest.prepare_frame(bars, datetime_index="date")
+        if not frame.empty:
+            frames.append(frame)
+        cursor = chunk_end + timedelta(milliseconds=1)
+    if not frames:
+        return pd.DataFrame()
+    merged = pd.concat(frames).sort_index()
+    return merged.loc[~merged.index.duplicated(keep="last")]
+
+
+def _effective_spec(config: dict[str, Any]) -> dict[str, Any]:
+    spec = dict(runtime.backtest_spec)
+    strategy_spec = dict(spec.get("strategy", {}) or {})
+    strategy_config = dict(strategy_spec.get("config", {}) or {})
+    trade_start = str(config.get("cloud_trade_start") or strategy_config.get("trade_start") or "")
+    if trade_start:
+        strategy_config["trade_start"] = trade_start
+    strategy_spec["config"] = strategy_config
+    spec["strategy"] = strategy_spec
+    execution = dict(spec.get("execution", {}) or {})
+    fetch_start = str(config.get("cloud_fetch_start") or execution.get("start") or "")
+    fetch_end = str(config.get("cloud_fetch_end") or execution.get("end") or "")
+    if fetch_start:
+        execution["start"] = fetch_start
+    if fetch_end:
+        execution["end"] = fetch_end
+    spec["execution"] = execution
+    return spec
+
+
 def _run_historical(config: dict[str, Any], symbol: str) -> None:
-    bars = data.crypto.futures.kline(
+    interval = str(config.get("timeframe") or "4h")
+    history_days = max(90, min(_as_int(config.get("history_days"), 150), 270))
+    spec = _effective_spec(config)
+    execution = spec.get("execution", {}) or {}
+    start = _parse_iso(execution.get("start"))
+    end = _parse_iso(execution.get("end"))
+    replay_frame = _fetch_replay_frame(
         symbol=symbol,
-        interval=str(config.get("timeframe") or "4h"),
-        exchange="bitget",
-        days=max(30, min(_as_int(config.get("history_days"), 90), 90)),
+        interval=interval,
+        start=start,
+        end=end,
+        history_days=history_days,
     )
-    replay_frame = backtest.prepare_frame(bars, datetime_index="date")
+    if end is not None:
+        replay_frame = replay_frame.loc[replay_frame.index <= end]
     if replay_frame.empty:
         runtime.emit_signal(
             action="watch",
@@ -43,7 +122,7 @@ def _run_historical(config: dict[str, Any], symbol: str) -> None:
 
     result = backtest.run(
         ohlcv_data={f"{symbol}.BINANCE": replay_frame},
-        spec=runtime.backtest_spec,
+        spec=spec,
     )
     chart_path = backtest.generate_chart(result)
     summary = result.summary or {}
@@ -59,6 +138,9 @@ def _run_historical(config: dict[str, Any], symbol: str) -> None:
             "total_trades": result.total_trades,
             "profit_factor": result.profit_factor,
             "rows": len(replay_frame),
+            "cloud_fetch_start": execution.get("start"),
+            "cloud_trade_start": (spec.get("strategy", {}) or {}).get("config", {}).get("trade_start"),
+            "cloud_fetch_end": execution.get("end"),
         }
     )
     runtime.emit_signal(

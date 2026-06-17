@@ -31,6 +31,11 @@ strategy:
     vol_ceiling: 0.45
     min_hold_bars: 3
     max_hold_bars: 18
+    trade_start: "2026-03-01T00:00:00Z"
+
+execution:
+  start: "2026-02-01T00:00:00Z"
+  end: "2026-06-01T00:00:00Z"
 
 instrument:
   id: BTCUSDT.BINANCE

@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime, timezone
 from typing import Optional
 
 import numpy as np
@@ -37,6 +38,7 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     vol_ceiling: float = 0.45
     min_hold_bars: int = 3
     max_hold_bars: int = 18
+    trade_start: str = ""
 
 
 class AdaptiveShortTrendStrategy(Strategy):
@@ -47,6 +49,7 @@ class AdaptiveShortTrendStrategy(Strategy):
         self._position: str = "NONE"
         self._hold_bars: int = 0
         self._instrument: Optional[Instrument] = None
+        self._trade_start_ns = self._parse_timestamp_ns(config.trade_start)
 
     def on_start(self) -> None:
         bar_type = self.cfg.bar_type or (
@@ -120,6 +123,8 @@ class AdaptiveShortTrendStrategy(Strategy):
         instrument = self._instrument
         if instrument is None:
             return
+        if self._trade_start_ns and int(bar.ts_event) < self._trade_start_ns:
+            return
         qty = Quantity(Decimal(self.cfg.trade_size), instrument.size_precision)
 
         has_open_position = self._has_open_position(instrument.id)
@@ -161,6 +166,16 @@ class AdaptiveShortTrendStrategy(Strategy):
 
     def _has_open_position(self, instrument_id: InstrumentId) -> bool:
         return bool(list(self.cache.positions_open(instrument_id=instrument_id)))
+
+    @staticmethod
+    def _parse_timestamp_ns(value: str) -> int:
+        if not value:
+            return 0
+        normalized = value.replace("Z", "+00:00")
+        parsed = datetime.fromisoformat(normalized)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return int(parsed.timestamp() * 1_000_000_000)
 
     def on_stop(self) -> None:
         if self._instrument is not None:
