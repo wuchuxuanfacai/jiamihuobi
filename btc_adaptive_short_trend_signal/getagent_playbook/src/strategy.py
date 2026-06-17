@@ -19,25 +19,30 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     instrument_ids: tuple[InstrumentId, ...] = ()
     bar_types: tuple[BarType, ...] = ()
     order_id_tag: str = "001"
-    trade_size: str = "0.001"
-    fast_window: int = 6
-    mid_window: int = 18
-    slow_window: int = 60
+    margin_budget: str = "1000"
+    min_trade_size: str = "0.001"
+    target_step_weight: float = 0.02
+    fast_window: int = 30
+    mid_window: int = 60
+    slow_window: int = 126
     long_window: int = 126
-    vol_window: int = 30
+    vol_window: int = 60
     bear_on: float = 0.48
     bear_off: float = 0.30
-    ret_slow_max: float = 0.02
-    ret_mid_max: float = 0.01
-    ret_mid_exit: float = 0.04
-    short_sma_mult: float = 1.01
-    mid_sma_mult: float = 1.005
+    ret_slow_max: float = -0.02
+    ret_mid_max: float = -0.02
+    short_sma_mult: float = 1.02
+    mid_sma_mult: float = 1.0
     rebound_ret_max: float = 0.055
     rebound_sma_mult: float = 1.015
-    exit_sma_mult: float = 1.025
-    vol_ceiling: float = 0.45
-    min_hold_bars: int = 3
-    max_hold_bars: int = 18
+    short_target_vol: float = 0.55
+    short_floor_cap: float = 1.0
+    max_short_weight: float = 1.0
+    short_base: float = 0.35
+    short_conf: float = 0.65
+    weight_scale: float = 1.0
+    vol_ceiling: float = 0.35
+    vol_floor_min: float = 0.20
     trade_start: str = ""
 
 
@@ -46,8 +51,6 @@ class AdaptiveShortTrendStrategy(Strategy):
         super().__init__(config)
         self.cfg = config
         self._closes: list[float] = []
-        self._position: str = "NONE"
-        self._hold_bars: int = 0
         self._instrument: Optional[Instrument] = None
         self._trade_start_ns = self._parse_timestamp_ns(config.trade_start)
 
@@ -112,43 +115,26 @@ class AdaptiveShortTrendStrategy(Strategy):
             and not rebound_blocked
             and realized_vol <= self.cfg.vol_ceiling
         )
-        exit_short = (
-            bear_strength <= self.cfg.bear_off
-            or ret_mid > self.cfg.ret_mid_exit
-            or latest > sma_long * self.cfg.exit_sma_mult
-            or rebound_blocked
-            or realized_vol > self.cfg.vol_ceiling
-        )
 
         instrument = self._instrument
         if instrument is None:
             return
         if self._trade_start_ns and int(bar.ts_event) < self._trade_start_ns:
             return
-        qty = Quantity(Decimal(self.cfg.trade_size), instrument.size_precision)
+        target_weight = self._target_weight(short_ok, bear_strength, realized_vol)
+        target_qty = self._target_short_qty(target_weight, latest)
+        current_qty = self._current_signed_qty(instrument.id)
+        delta_qty = target_qty - current_qty
+        min_qty = float(self.cfg.min_trade_size)
+        if abs(delta_qty) < min_qty:
+            return
 
-        has_open_position = self._has_open_position(instrument.id)
-        if has_open_position and self._position == "NONE":
-            self._position = "SHORT"
-            self._hold_bars = max(self._hold_bars, 1)
-        elif not has_open_position and self._position == "SHORT":
-            self._position = "NONE"
-            self._hold_bars = 0
-
-        if has_open_position:
-            self._hold_bars += 1
-
-        if not has_open_position and short_ok:
-            self._submit(instrument.id, OrderSide.SELL, qty)
-            self._position = "SHORT"
-            self._hold_bars = 0
-        elif has_open_position and (
-            self._hold_bars >= self.cfg.max_hold_bars
-            or (self._hold_bars >= self.cfg.min_hold_bars and exit_short)
-        ):
-            self.close_all_positions(instrument.id)
-            self._position = "NONE"
-            self._hold_bars = 0
+        rounded_delta = self._round_qty(abs(delta_qty), min_qty)
+        if rounded_delta < min_qty:
+            return
+        qty = Quantity(Decimal(str(rounded_delta)), instrument.size_precision)
+        side = OrderSide.SELL if delta_qty < 0.0 else OrderSide.BUY
+        self._submit(instrument.id, side, qty)
 
     def _submit(
         self,
@@ -164,8 +150,47 @@ class AdaptiveShortTrendStrategy(Strategy):
         )
         self.submit_order(order)
 
-    def _has_open_position(self, instrument_id: InstrumentId) -> bool:
-        return bool(list(self.cache.positions_open(instrument_id=instrument_id)))
+    def _target_weight(self, short_ok: bool, bear_strength: float, realized_vol: float) -> float:
+        if not short_ok:
+            return 0.0
+        safe_vol = max(float(realized_vol), float(self.cfg.vol_floor_min))
+        bear_conf = min(
+            1.0,
+            max(0.0, (bear_strength - self.cfg.bear_on) / max(1.0 - self.cfg.bear_on, 1e-9)),
+        )
+        raw = -min(
+            float(self.cfg.short_floor_cap),
+            (float(self.cfg.short_target_vol) / safe_vol)
+            * (float(self.cfg.short_base) + float(self.cfg.short_conf) * bear_conf),
+        )
+        scaled = raw * float(self.cfg.weight_scale)
+        return max(-float(self.cfg.max_short_weight), min(0.0, scaled))
+
+    def _target_short_qty(self, target_weight: float, price: float) -> float:
+        if abs(target_weight) < float(self.cfg.target_step_weight):
+            return 0.0
+        budget = max(float(self.cfg.margin_budget), 0.0)
+        min_qty = float(self.cfg.min_trade_size)
+        raw_qty = abs(target_weight) * budget / max(price, 1e-9)
+        rounded = self._round_qty(raw_qty, min_qty)
+        return -rounded if rounded >= min_qty else 0.0
+
+    @staticmethod
+    def _round_qty(value: float, step: float) -> float:
+        if step <= 0.0:
+            return value
+        return float(np.floor((value + 1e-12) / step) * step)
+
+    def _current_signed_qty(self, instrument_id: InstrumentId) -> float:
+        signed = 0.0
+        for position in self.cache.positions_open(instrument_id=instrument_id):
+            quantity = float(position.quantity)
+            side = str(getattr(position, "side", "")).upper()
+            if "SHORT" in side:
+                signed -= quantity
+            else:
+                signed += quantity
+        return signed
 
     @staticmethod
     def _parse_timestamp_ns(value: str) -> int:

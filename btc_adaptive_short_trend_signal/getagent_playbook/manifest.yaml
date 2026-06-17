@@ -27,32 +27,30 @@ follow_trade_supported: true
 strategy_config:
   trading_symbols: ["BTCUSDT"]
   leverage: 3
-  margin_budget: "100"
+  margin_budget: "1000"
   timeframe: "4h"
-  history_days: 90
+  history_days: 220
   aggressiveness: 1.0
-  weight_scale: 1.4
-  fast_trend_days: 1
-  mid_trend_days: 3
-  slow_trend_days: 10
+  weight_scale: 1.0
+  fast_trend_days: 5
+  mid_trend_days: 10
+  slow_trend_days: 21
   long_trend_days: 21
-  vol_days: 5
+  vol_days: 10
   bear_on: 0.48
   bear_off: 0.30
-  ret_slow_max: 0.02
-  ret_mid_max: 0.01
-  ret_mid_exit: 0.04
-  short_sma_mult: 1.01
-  mid_sma_mult: 1.005
+  ret_slow_max: -0.02
+  ret_mid_max: -0.02
+  short_sma_mult: 1.02
+  mid_sma_mult: 1.0
   rebound_ret_max: 0.055
   rebound_sma_mult: 1.015
-  exit_sma_mult: 1.025
-  short_target_vol: 0.35
+  short_target_vol: 0.55
   short_floor_cap: 1.00
-  short_base: 0.65
-  short_conf: 0.55
-  max_short_weight: 1.40
-  max_signal_weight: 1.40
+  short_base: 0.35
+  short_conf: 0.65
+  max_short_weight: 1.00
+  max_signal_weight: 1.00
   trend_on: 0.68
   ret_slow_min: 0.0
   ret_mid_min: 0.0
@@ -60,14 +58,13 @@ strategy_config:
   long_target_vol: 0.0
   long_floor_cap: 0.0
   max_long_weight: 0.0
-  vol_ceiling: 0.45
+  vol_ceiling: 0.35
   vol_floor_min: 0.20
-  min_hold_bars: 3
-  max_hold_bars: 18
-  cloud_fetch_start: "2026-02-01T00:00:00Z"
-  cloud_trade_start: "2026-03-01T00:00:00Z"
+  target_step_weight: 0.02
+  min_trade_size: "0.001"
+  cloud_fetch_start: "2025-11-01T00:00:00Z"
+  cloud_trade_start: "2026-03-03T00:00:00Z"
   cloud_fetch_end: "2026-06-01T00:00:00Z"
-  trade_size: "0.001"
 
 user_config_schema:
   trading_symbols:
@@ -93,7 +90,7 @@ user_config_schema:
     label: "Leverage"
   margin_budget:
     type: string
-    default: "100"
+    default: "1000"
     pattern: "^[0-9]+(\\.[0-9]+)?$"
     label: "Margin budget USDT"
   timeframe:
@@ -109,19 +106,19 @@ user_config_schema:
     label: "Signal aggressiveness"
   weight_scale:
     type: number
-    default: 1.4
+    default: 1.0
     min: 0.5
     max: 2.0
     label: "Weight scale"
   max_signal_weight:
     type: number
-    default: 1.40
+    default: 1.00
     min: 0.01
     max: 2.0
     label: "Max signal weight"
   max_short_weight:
     type: number
-    default: 1.40
+    default: 1.00
     min: 0.0
     max: 2.0
     label: "Max short weight"
@@ -133,19 +130,19 @@ user_config_schema:
     label: "Max long weight"
   fast_trend_days:
     type: number
-    default: 1
+    default: 5
     min: 1
     max: 14
     label: "Fast trend lookback"
   mid_trend_days:
     type: number
-    default: 3
+    default: 10
     min: 1
     max: 30
     label: "Middle trend lookback"
   slow_trend_days:
     type: number
-    default: 10
+    default: 21
     min: 3
     max: 90
     label: "Slow trend lookback"
@@ -169,7 +166,7 @@ user_config_schema:
     label: "Short floor cap"
   short_target_vol:
     type: number
-    default: 0.35
+    default: 0.55
     min: 0.01
     max: 1.2
     label: "Short target volatility"
@@ -181,19 +178,7 @@ user_config_schema:
     label: "Long floor cap"
   vol_ceiling:
     type: number
-    default: 0.45
+    default: 0.35
     min: 0.1
     max: 9.0
     label: "Volatility ceiling"
-  min_hold_bars:
-    type: integer
-    default: 3
-    min: 1
-    max: 12
-    label: "Minimum hold bars"
-  max_hold_bars:
-    type: integer
-    default: 18
-    min: 6
-    max: 72
-    label: "Maximum hold bars"

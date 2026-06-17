@@ -15,8 +15,9 @@ not included in the upload package.
 
 The Playbook opens a short signal when bearish trend alignment, medium-term
 momentum, broader trend position, rebound filtering, and volatility checks
-agree. The short trend floor is the base position. Long entries are disabled
-by default, so the configuration is strictly short-or-flat.
+agree. The short trend floor is expressed as a target exposure, not as a fixed
+order size. Long entries are disabled by default, so the configuration is
+strictly short-or-flat.
 
 If the bearish regime is not confirmed, the strategy emits hold. It does not
 short every dip, and it avoids entries when the rebound filter suggests the
@@ -31,26 +32,26 @@ long entry path.
 
 This package emits managed signals and includes a simplified deterministic
 historical replay path for GetAgent Cloud validation. It is compatible with
-managed follow-trade deployment, while the historical path uses replayed orders
-inside the platform backtest engine. The Cloud replay uses shorter adaptive
-windows than the frozen research snapshot so a limited platform data window can
-still warm up before the official trading window starts. Risk control comes from regime withdrawal,
-volatility-aware sizing, and hard caps on target exposure.
+managed follow-trade deployment, while the historical path uses replayed target
+position adjustments inside the platform backtest engine. The Cloud replay
+fetches pre-roll history before the trading window so trend and volatility
+features are already formed when live trading begins. Risk control comes from
+regime withdrawal, volatility-aware sizing, exchange minimum-lot rounding, and
+hard caps on target exposure.
 
 ## Parameters 参数
 
 Subscribers can tune leverage, margin budget, timeframe, aggressiveness, weight
 scale, maximum signal weight, max short weight, trend lookbacks, short floor
-cap, short target volatility, volatility ceiling, and minimum or maximum hold
-bars.
+cap, short target volatility, and volatility ceiling.
 
 Higher leverage amplifies both gains and drawdowns. Margin budget controls the
 capital base used by the platform for sizing and return interpretation. Higher
 aggressiveness makes the model act earlier. Higher weight scale and exposure
 caps allow larger signals in confirmed regimes. Lower volatility ceiling makes
-the model more selective during unstable periods. Hold-bar limits make the
-Cloud replay re-evaluate short exposure regularly instead of leaving one
-position open for the whole weak regime.
+the model more selective during unstable periods. The Cloud replay recalculates
+the desired BTC quantity on every 4h bar and adjusts only when the target
+change is large enough to clear exchange lot-size constraints.
 
 ## Local Research Context 回测指标如何读
 
@@ -68,7 +69,9 @@ Local result for selected candidate `source_rank=1`, `weight_scale=1.40`:
 These are local research results with a 6 bps turnover cost assumption. The
 GetAgent package also contains a Cloud backtest path under `backtest_support:
 full`; Cloud results may differ because they use the platform K-line provider,
-the shorter platform replay window, and Nautilus execution assumptions.
+the platform replay engine, and Nautilus execution assumptions. The current
+Cloud package is designed to approximate a low average exposure target-position
+model rather than a fixed-size short-entry model.
 
 ## Risk 风险
 

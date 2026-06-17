@@ -19,8 +19,10 @@ No API keys, private DuckDB databases, or Bitget credentials are included.
 The model looks for persistent bearish alignment in BTCUSDT perpetual futures.
 It requires medium-term weakness to remain intact, filters out strong rebounds,
 uses recent realized volatility to size the short floor, and caps target
-exposure. The uploaded code now uses a hard short-or-flat posture, so the
-default strategy can only open short signals or hold.
+exposure. The uploaded code uses a hard short-or-flat posture and translates
+the volatility-scaled floor into a target BTC quantity, so it behaves like a
+low average exposure position-adjustment model rather than a fixed-size short
+entry model.
 
 The GetAgent package uses sandbox-replayable intraday futures bars. The frozen
 research snapshot was exported from a local optimization run. The private raw
@@ -70,8 +72,10 @@ execution_mode: follow_trade
 The package includes `backtest.yaml` and a Nautilus strategy class so GetAgent
 Cloud can run historical validation. Cloud results may differ from the frozen
 research snapshot because they use platform K-lines and the platform replay
-window. The uploaded logic does not import local files or direct exchange
-clients.
+window. The current Cloud configuration fetches pre-roll history, then trades
+from the declared Cloud trading window with target-position adjustments and
+exchange minimum-lot rounding. The uploaded logic does not import local files
+or direct exchange clients.
 
 ## Files
 

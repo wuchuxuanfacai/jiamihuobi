@@ -42,6 +42,20 @@ def _to_ms(value: datetime) -> int:
     return int(value.timestamp() * 1000)
 
 
+def _as_float(value: Any, default: float) -> float:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    if not math.isfinite(parsed):
+        return default
+    return parsed
+
+
+def _rolling_days(value: Any, bars_per_day: float, minimum: int) -> int:
+    return max(minimum, int(round(_as_float(value, 1.0) * bars_per_day)))
+
+
 def _fetch_replay_frame(
     symbol: str,
     interval: str,
@@ -78,6 +92,35 @@ def _effective_spec(config: dict[str, Any]) -> dict[str, Any]:
     spec = dict(runtime.backtest_spec)
     strategy_spec = dict(spec.get("strategy", {}) or {})
     strategy_config = dict(strategy_spec.get("config", {}) or {})
+    interval = str(config.get("timeframe") or "4h")
+    bars_per_day = 6.0 if interval == "4h" else 24.0 if interval == "1h" else 96.0
+    mapped = {
+        "margin_budget": str(config.get("margin_budget") or strategy_config.get("margin_budget") or "1000"),
+        "min_trade_size": str(config.get("min_trade_size") or strategy_config.get("min_trade_size") or "0.001"),
+        "target_step_weight": _as_float(config.get("target_step_weight"), strategy_config.get("target_step_weight", 0.02)),
+        "fast_window": _rolling_days(config.get("fast_trend_days"), bars_per_day, 3),
+        "mid_window": _rolling_days(config.get("mid_trend_days"), bars_per_day, 6),
+        "slow_window": _rolling_days(config.get("slow_trend_days"), bars_per_day, 12),
+        "long_window": _rolling_days(config.get("long_trend_days"), bars_per_day, 24),
+        "vol_window": _rolling_days(config.get("vol_days"), bars_per_day, 6),
+        "bear_on": _as_float(config.get("bear_on"), strategy_config.get("bear_on", 0.48)),
+        "bear_off": _as_float(config.get("bear_off"), strategy_config.get("bear_off", 0.30)),
+        "ret_slow_max": _as_float(config.get("ret_slow_max"), strategy_config.get("ret_slow_max", -0.02)),
+        "ret_mid_max": _as_float(config.get("ret_mid_max"), strategy_config.get("ret_mid_max", -0.02)),
+        "short_sma_mult": _as_float(config.get("short_sma_mult"), strategy_config.get("short_sma_mult", 1.02)),
+        "mid_sma_mult": _as_float(config.get("mid_sma_mult"), strategy_config.get("mid_sma_mult", 1.0)),
+        "rebound_ret_max": _as_float(config.get("rebound_ret_max"), strategy_config.get("rebound_ret_max", 0.055)),
+        "rebound_sma_mult": _as_float(config.get("rebound_sma_mult"), strategy_config.get("rebound_sma_mult", 1.015)),
+        "short_target_vol": _as_float(config.get("short_target_vol"), strategy_config.get("short_target_vol", 0.55)),
+        "short_floor_cap": _as_float(config.get("short_floor_cap"), strategy_config.get("short_floor_cap", 1.0)),
+        "max_short_weight": _as_float(config.get("max_short_weight"), strategy_config.get("max_short_weight", 1.0)),
+        "short_base": _as_float(config.get("short_base"), strategy_config.get("short_base", 0.35)),
+        "short_conf": _as_float(config.get("short_conf"), strategy_config.get("short_conf", 0.65)),
+        "weight_scale": _as_float(config.get("weight_scale"), strategy_config.get("weight_scale", 1.0)),
+        "vol_ceiling": _as_float(config.get("vol_ceiling"), strategy_config.get("vol_ceiling", 0.35)),
+        "vol_floor_min": _as_float(config.get("vol_floor_min"), strategy_config.get("vol_floor_min", 0.20)),
+    }
+    strategy_config.update(mapped)
     trade_start = str(config.get("cloud_trade_start") or strategy_config.get("trade_start") or "")
     if trade_start:
         strategy_config["trade_start"] = trade_start
