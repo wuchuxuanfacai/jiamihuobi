@@ -18,6 +18,9 @@ except ImportError:  # Nautilus may import this module from the src path.
     from decision_logic import compute_signal_state
 
 
+positions: list[object] = []
+
+
 class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     instrument_id: Optional[InstrumentId] = None
     bar_type: Optional[BarType] = None

@@ -99,9 +99,9 @@ locked_test max_drawdown approximately -3.76%
 11. 策略必须保持 backtest_support: full。
 12. 策略必须保持 execution_mode: follow_trade。
 13. 不要引入 requests、ccxt、DuckDB、API key 或交易所私有 SDK。
-14. 不要生成或修复任何平台持仓列表读取逻辑。这个策略不需要读取平台持仓列表；它用 `_tracked_qty` 追踪目标数量。
+14. 不要生成或修复任何平台持仓列表读取逻辑。这个策略不需要读取平台持仓列表；它用 `_tracked_qty` 追踪目标数量。源码入口里保留了 `positions = []` 兼容兜底，只是为了防止 authoring runtime 自动改写时引用未定义变量，不参与交易逻辑。
 
-如果 authoring 过程中出现未定义持仓列表变量错误，不要继续在错误代码上打补丁；请回到仓库原始目录结构，完整读取 `getagent_playbook/`，不要让系统把源码改写成单文件策略。
+如果 authoring 过程中出现未定义持仓列表变量错误，请确认生成代码顶部存在 `positions = []` 兜底；不要继续引入真实平台持仓读取逻辑。请回到仓库原始目录结构，完整读取 `getagent_playbook/`，不要让系统把源码改写成单文件策略。
 
 manifest.yaml 中必须确认这些关键字段：
 

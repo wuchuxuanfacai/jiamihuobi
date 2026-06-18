@@ -11,6 +11,9 @@ except ImportError:
     from decision_logic import compute_signal_state
 
 
+positions: list[object] = []
+
+
 @dataclass
 class Decision:
     action: str

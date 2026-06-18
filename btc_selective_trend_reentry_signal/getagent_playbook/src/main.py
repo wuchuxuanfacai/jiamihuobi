@@ -9,6 +9,9 @@ from getagent import backtest, data, runtime
 from .features import build_decision, load_intraday_bars
 
 
+positions: list[Any] = []
+
+
 def _clean(value: Any) -> Any:
     if isinstance(value, float) and not math.isfinite(value):
         return None
