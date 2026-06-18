@@ -1,0 +1,37 @@
+{
+  "selected": {
+    "source_rank": 1,
+    "weight_scale": 1.75,
+    "timeframe": "4h",
+    "validation": {
+      "annual_return": 0.2536169345883805,
+      "total_return": 0.2297803844051589,
+      "max_drawdown": -0.0579651335969988,
+      "sharpe": 1.571393917250019
+    },
+    "locked_test": {
+      "annual_return": 1.1968709150191317,
+      "total_return": 0.3264016509850691,
+      "max_drawdown": -0.0376223394811638,
+      "sharpe": 3.746696200870055
+    },
+    "train": {
+      "annual_return": 0.0061761782579665,
+      "max_drawdown": -0.0979081134669423,
+      "sharpe": 0.1185066489608832
+    }
+  },
+  "target": {
+    "min_annual_return": 0.2,
+    "max_drawdown_abs": 0.06
+  },
+  "checks": {
+    "validation_annual_return_ok": true,
+    "validation_max_drawdown_ok": true,
+    "locked_test_annual_return_ok": true,
+    "locked_test_max_drawdown_ok": true,
+    "pass_target_flag": true
+  },
+  "passed": true,
+  "summary": "validation annual 25.36%, validation max drawdown -5.80%; locked_test annual 119.69%, locked_test max drawdown -3.76%"
+}
