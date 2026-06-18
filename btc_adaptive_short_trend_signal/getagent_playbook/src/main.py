@@ -165,6 +165,7 @@ def _effective_spec(config: dict[str, Any]) -> dict[str, Any]:
         "range_trend_max": _as_float(config.get("range_trend_max"), strategy_config.get("range_trend_max", 0.72880)),
         "range_bear_max": _as_float(config.get("range_bear_max"), strategy_config.get("range_bear_max", 0.56401)),
         "range_vol_ceiling": _as_float(config.get("range_vol_ceiling"), strategy_config.get("range_vol_ceiling", 0.59266)),
+        "trend_invalidation_off": _as_float(config.get("trend_invalidation_off"), strategy_config.get("trend_invalidation_off", 0.30)),
     }
     strategy_config.update(mapped)
     trade_start = str(config.get("cloud_trade_start") or strategy_config.get("trade_start") or "")

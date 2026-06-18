@@ -113,6 +113,7 @@ def compute_signal_state(
     max_short_weight = _clip(_as_float(config.get("max_short_weight"), 1.6), 0.0, max_signal_weight)
     max_long_weight = _clip(_as_float(config.get("max_long_weight"), 0.50), 0.0, max_signal_weight)
     safe_vol = max(realized_vol, _as_float(config.get("vol_floor_min"), 0.20))
+    trend_invalidation_off = _as_float(config.get("trend_invalidation_off"), 0.30)
 
     weak_momentum = (
         ret_mid < _as_float(config.get("ret_mid_max"), 0.01)
@@ -130,6 +131,7 @@ def compute_signal_state(
         and bear_strength >= bear_on
         and weak_momentum
         and latest < sma_long * _as_float(config.get("short_sma_mult"), 1.03)
+        and latest < sma_slow
         and not rebound_blocked
         and realized_vol <= _as_float(config.get("vol_ceiling"), 0.35)
     )
@@ -144,38 +146,10 @@ def compute_signal_state(
         else 0.0
     )
 
-    high_vol_bear_on = _as_float(config.get("high_vol_bear_on"), 0.42)
-    high_vol_short_ok = (
-        max_short_weight > 0.0
-        and realized_vol > _as_float(config.get("high_vol_floor"), 0.40)
-        and realized_vol <= _as_float(config.get("high_vol_ceiling"), 0.55)
-        and bear_strength >= high_vol_bear_on
-        and weak_momentum
-        and latest < sma_long * _as_float(config.get("high_vol_sma_mult"), 1.02)
-        and not rebound_blocked
-    )
-    breakdown_ok = (
-        bear_strength >= _as_float(config.get("dynamic_short_bear_on"), 0.56)
-        and ret_fast < _as_float(config.get("short_accel_ret_max"), -0.015)
-        and latest < sma_fast
-    )
-    upthrust_ok = (
-        bear_strength >= _as_float(config.get("dynamic_short_bear_on"), 0.56)
-        and channel_z >= _as_float(config.get("short_rebound_z"), 0.70)
-        and latest < sma_long * _as_float(config.get("dynamic_short_sma_mult"), 1.02)
-    )
-    high_vol_conf = _clip((bear_strength - high_vol_bear_on) / max(1.0 - high_vol_bear_on, 1e-9), 0.0, 1.0)
+    high_vol_short_ok = False
+    breakdown_ok = False
+    upthrust_ok = False
     trend_short_dynamic = 0.0
-    if high_vol_short_ok or breakdown_ok or upthrust_ok:
-        dynamic_cap = _as_float(config.get("dynamic_short_cap"), 0.45)
-        high_vol_cap = _as_float(config.get("high_vol_short_cap"), 1.0) if high_vol_short_ok else dynamic_cap
-        dynamic_target_vol = _as_float(config.get("high_vol_target_vol"), 0.50) if high_vol_short_ok else _as_float(config.get("dynamic_short_target_vol"), 0.65)
-        dynamic_base = _as_float(config.get("high_vol_short_base"), 0.65) if high_vol_short_ok else _as_float(config.get("dynamic_short_base"), 0.25)
-        dynamic_conf = _as_float(config.get("high_vol_short_conf"), 0.0) if high_vol_short_ok else _as_float(config.get("dynamic_short_conf"), 0.35)
-        trend_short_dynamic = -min(
-            high_vol_cap,
-            (dynamic_target_vol / safe_vol) * (dynamic_base + dynamic_conf * max(high_vol_conf, bear_conf)),
-        )
 
     long_on = _as_float(config.get("long_on"), 0.50)
     long_ok = (
@@ -183,6 +157,7 @@ def compute_signal_state(
         and trend_strength >= long_on
         and ret_mid > _as_float(config.get("long_ret_mid_min"), 0.01)
         and latest > sma_long * _as_float(config.get("long_sma_mult"), 1.0)
+        and latest > sma_slow
         and realized_vol <= _as_float(config.get("long_vol_ceiling"), 0.45)
     )
     long_conf = _clip((trend_strength - long_on) / max(1.0 - long_on, 1e-9), 0.0, 1.0)
@@ -192,27 +167,9 @@ def compute_signal_state(
         else 0.0
     )
 
-    long_trend_ok = (
-        max_long_weight > 0.0
-        and trend_strength >= _as_float(config.get("dynamic_long_trend_on"), 0.58)
-        and latest > sma_long * _as_float(config.get("dynamic_long_sma_mult"), 0.995)
-        and realized_vol <= _as_float(config.get("dynamic_long_vol_ceiling"), 0.55)
-    )
-    accel_long_ok = long_trend_ok and ret_fast > _as_float(config.get("long_accel_ret_min"), 0.015) and latest > sma_fast
-    pullback_long_ok = (
-        long_trend_ok
-        and channel_z <= _as_float(config.get("long_pullback_z"), -0.80)
-        and ret_mid > _as_float(config.get("long_pullback_ret_mid_min"), -0.015)
-        and latest > sma_slow * _as_float(config.get("long_pullback_slow_mult"), 0.97)
-    )
+    accel_long_ok = False
+    pullback_long_ok = False
     trend_long_dynamic = 0.0
-    if accel_long_ok or pullback_long_ok:
-        dyn_conf = max(long_conf, _clip((trend_strength - 0.5) / 0.5, 0.0, 1.0))
-        trend_long_dynamic = min(
-            _as_float(config.get("dynamic_long_cap"), 0.35),
-            (_as_float(config.get("dynamic_long_target_vol"), 0.55) / safe_vol)
-            * (_as_float(config.get("dynamic_long_base"), 0.18) + _as_float(config.get("dynamic_long_conf"), 0.32) * dyn_conf),
-        )
 
     range_mean_reversion = 0.0
     range_ok = (
@@ -242,6 +199,10 @@ def compute_signal_state(
 
     raw_sum = trend_long_base + trend_long_dynamic + trend_short_base + trend_short_dynamic + range_mean_reversion
     target_weight = _clip(raw_sum * weight_scale, -max_short_weight, max_long_weight)
+    if target_weight > 0.0 and trend_strength < trend_invalidation_off:
+        target_weight = 0.0
+    elif target_weight < 0.0 and bear_strength < trend_invalidation_off:
+        target_weight = 0.0
     if abs(target_weight) < _as_float(config.get("target_step_weight"), 0.02):
         target_weight = 0.0
 

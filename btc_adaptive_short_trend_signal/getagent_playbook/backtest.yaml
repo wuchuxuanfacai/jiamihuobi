@@ -12,18 +12,18 @@ strategy:
   config_class: AdaptiveShortTrendStrategyConfig
   config:
     order_id_tag: "001"
-    margin_budget: "1000"
+    margin_budget: "50000"
     leverage: 3
     min_trade_size: "0.001"
     target_step_weight: 0.06
-    max_effective_exposure: 0.80
+    max_effective_exposure: 0.95
     min_rebalance_qty_pct: 0.25
     fast_window: 18
     mid_window: 60
     slow_window: 180
     long_window: 540
     vol_window: 60
-    bear_on: 0.56
+    bear_on: 0.50
     bear_off: 0.50
     ret_slow_max: -0.08
     ret_mid_max: -0.04
@@ -48,12 +48,12 @@ strategy:
     high_vol_short_cap: 0.20
     high_vol_short_base: 0.35
     high_vol_short_conf: 0.0
-    long_on: 0.68
-    long_ret_mid_min: 0.00
+    long_on: 0.57
+    long_ret_mid_min: 0.005
     long_sma_mult: 1.02
     long_vol_ceiling: 0.45
-    long_floor_cap: 0.10
-    max_long_weight: 0.10
+    long_floor_cap: 0.30
+    max_long_weight: 0.30
     dynamic_long_cap: 0.03
     dynamic_short_cap: 0.03
     dynamic_long_trend_on: 0.68
@@ -76,12 +76,13 @@ strategy:
     channel_slope_deadband: 0.00313
     range_bias_strength: 0.54640
     channel_slope_window: 45
-    range_mr_cap: 0.03
-    range_min_component: 0.00
+    range_mr_cap: 0.12
+    range_min_component: 0.08
     range_z_entry: 1.10
-    range_trend_max: 0.50
-    range_bear_max: 0.50
+    range_trend_max: 0.15
+    range_bear_max: 0.15
     range_vol_ceiling: 0.45
+    trend_invalidation_off: 0.30
     trade_start: "2025-03-01T00:00:00Z"
 
 execution:

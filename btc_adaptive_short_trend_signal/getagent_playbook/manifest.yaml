@@ -27,18 +27,18 @@ follow_trade_supported: true
 strategy_config:
   trading_symbols: ["BTCUSDT"]
   leverage: 3
-  margin_budget: "1000"
+  margin_budget: "50000"
   timeframe: "4h"
   history_days: 220
   aggressiveness: 1.0
   weight_scale: 1.40
-  max_effective_exposure: 0.80
+  max_effective_exposure: 0.95
   fast_trend_days: 3
   mid_trend_days: 10
   slow_trend_days: 30
   long_trend_days: 90
   vol_days: 10
-  bear_on: 0.56
+  bear_on: 0.50
   bear_off: 0.50
   ret_slow_max: -0.08
   ret_mid_max: -0.04
@@ -53,10 +53,10 @@ strategy_config:
   max_short_weight: 1.00
   max_signal_weight: 1.00
   long_sma_mult: 1.02
-  long_floor_cap: 0.10
-  max_long_weight: 0.10
-  long_on: 0.68
-  long_ret_mid_min: 0.00
+  long_floor_cap: 0.30
+  max_long_weight: 0.30
+  long_on: 0.57
+  long_ret_mid_min: 0.005
   long_vol_ceiling: 0.45
   dynamic_long_cap: 0.03
   dynamic_short_cap: 0.03
@@ -80,11 +80,11 @@ strategy_config:
   channel_slope_deadband: 0.00313
   range_bias_strength: 0.54640
   channel_slope_window: 45
-  range_mr_cap: 0.03
-  range_min_component: 0.00
+  range_mr_cap: 0.12
+  range_min_component: 0.08
   range_z_entry: 1.10
-  range_trend_max: 0.50
-  range_bear_max: 0.50
+  range_trend_max: 0.15
+  range_bear_max: 0.15
   range_vol_ceiling: 0.45
   vol_ceiling: 0.45
   vol_floor_min: 0.20
@@ -98,6 +98,7 @@ strategy_config:
   high_vol_short_conf: 0.00
   target_step_weight: 0.06
   min_rebalance_qty_pct: 0.25
+  trend_invalidation_off: 0.30
   min_trade_size: "0.001"
   cloud_fetch_start: "2025-01-01T00:00:00Z"
   cloud_trade_start: "2025-03-01T00:00:00Z"
@@ -127,7 +128,7 @@ user_config_schema:
     label: "Leverage"
   margin_budget:
     type: string
-    default: "1000"
+    default: "50000"
     pattern: "^[0-9]+(\\.[0-9]+)?$"
     label: "Margin budget USDT"
   timeframe:
@@ -155,7 +156,7 @@ user_config_schema:
     label: "Max signal weight"
   max_effective_exposure:
     type: number
-    default: 0.80
+    default: 0.95
     min: 0.10
     max: 3.0
     label: "Max effective exposure"
@@ -167,7 +168,7 @@ user_config_schema:
     label: "Max short weight"
   max_long_weight:
     type: number
-    default: 0.10
+    default: 0.30
     min: 0.0
     max: 1.0
     label: "Max long weight"
@@ -197,7 +198,7 @@ user_config_schema:
     label: "Long trend lookback"
   bear_on:
     type: number
-    default: 0.56
+    default: 0.50
     min: 0.3
     max: 0.9
     label: "Bear trend threshold"
@@ -215,7 +216,7 @@ user_config_schema:
     label: "Short target volatility"
   long_floor_cap:
     type: number
-    default: 0.10
+    default: 0.30
     min: 0.0
     max: 1.0
     label: "Long floor cap"

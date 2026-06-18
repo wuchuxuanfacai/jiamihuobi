@@ -6,9 +6,10 @@ This Playbook trades BTCUSDT perpetual futures with one composite target
 position. The target is built from three sub-models: a trend-long model, a
 trend-short model, and a range mean-reversion model. Each sub-model produces a
 signed weight, then the final target is the clipped sum of those weights.
-The current default profile is deliberately low-turnover and trend-led: the
-short trend branch is the main risk-taking path, while long and range exposure
-are smaller auxiliary components.
+The current default profile is deliberately trend-led: the short trend branch
+and a smaller long trend branch are the only active base components, while
+range exposure is effectively suppressed unless both directional reads are very
+quiet.
 
 The uploaded package uses only replayable intraday futures OHLCV bars. It does
 not read local databases, API keys, private research files, direct exchange
@@ -17,13 +18,13 @@ SDKs, or HTTP clients.
 ## Entry 开仓
 
 The trend-long model can hold a long base when broader upside alignment is
-healthy. It can also add a dynamic long component when the same broader trend
-has either short-term acceleration or a controlled pullback that still looks
-constructive.
+healthy. Dynamic long add-ons are disabled in the default profile so the long
+side stays simple and easier to audit.
 
-The trend-short model can hold a short base when downside alignment and weak
-momentum are clear. It can also add a smaller dynamic short component during a
-breakdown, a rebound failure, or a higher-volatility bearish structure.
+The trend-short model can hold a short base when downside alignment, weak
+momentum, and price location below trend references are clear. Dynamic short
+add-ons are disabled in the default profile to keep turnover and exposure
+controlled.
 
 The range model is active only when neither trend side is dominant. It fades
 channel extremes with smaller flexible weights: lower-channel weakness can
@@ -45,6 +46,8 @@ trend and volatility features are already formed when trading begins. Orders in
 the backtest are target-position adjustments, not isolated fixed-size entries.
 Small target changes are ignored unless they are large enough to justify a
 rebalance, reducing churn and fee drag in sideways periods.
+When trend confirmation falls below the invalidation threshold, the target is
+forced back toward flat.
 
 ## Parameters
 
