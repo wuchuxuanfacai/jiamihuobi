@@ -75,6 +75,7 @@ def _fetch_replay_frame(
             symbol=symbol,
             interval=interval,
             exchange="bitget",
+            limit=1000,
             start_time=_to_ms(cursor),
             end_time=_to_ms(chunk_end),
         )
@@ -167,6 +168,18 @@ def _effective_spec(config: dict[str, Any]) -> dict[str, Any]:
         "range_vol_ceiling": _as_float(config.get("range_vol_ceiling"), strategy_config.get("range_vol_ceiling", 0.59266)),
         "range_abs_slope_max": _as_float(config.get("range_abs_slope_max"), strategy_config.get("range_abs_slope_max", 0.025)),
         "range_ret_slow_abs_max": _as_float(config.get("range_ret_slow_abs_max"), strategy_config.get("range_ret_slow_abs_max", 0.12)),
+        "idle_start_bars": _as_int(config.get("idle_start_bars"), _as_int(strategy_config.get("idle_start_bars"), 18)),
+        "idle_full_bars": _as_int(config.get("idle_full_bars"), _as_int(strategy_config.get("idle_full_bars"), 54)),
+        "idle_strength_relax": _as_float(config.get("idle_strength_relax"), strategy_config.get("idle_strength_relax", 0.10)),
+        "idle_vol_relax": _as_float(config.get("idle_vol_relax"), strategy_config.get("idle_vol_relax", 0.35)),
+        "idle_slope_relax": _as_float(config.get("idle_slope_relax"), strategy_config.get("idle_slope_relax", 0.75)),
+        "idle_ret_relax": _as_float(config.get("idle_ret_relax"), strategy_config.get("idle_ret_relax", 0.30)),
+        "idle_range_z_relax": _as_float(config.get("idle_range_z_relax"), strategy_config.get("idle_range_z_relax", 0.35)),
+        "idle_range_cap_boost": _as_float(config.get("idle_range_cap_boost"), strategy_config.get("idle_range_cap_boost", 0.50)),
+        "idle_range_min_boost": _as_float(config.get("idle_range_min_boost"), strategy_config.get("idle_range_min_boost", 0.02)),
+        "idle_carry_on": _as_float(config.get("idle_carry_on"), strategy_config.get("idle_carry_on", 0.55)),
+        "idle_carry_z_mult": _as_float(config.get("idle_carry_z_mult"), strategy_config.get("idle_carry_z_mult", 0.55)),
+        "idle_carry_cap": _as_float(config.get("idle_carry_cap"), strategy_config.get("idle_carry_cap", 0.035)),
         "trend_invalidation_off": _as_float(config.get("trend_invalidation_off"), strategy_config.get("trend_invalidation_off", 0.30)),
     }
     strategy_config.update(mapped)
@@ -188,11 +201,11 @@ def _effective_spec(config: dict[str, Any]) -> dict[str, Any]:
 
 def _run_historical(config: dict[str, Any], symbol: str) -> None:
     interval = str(config.get("timeframe") or "4h")
-    history_days = max(90, min(_as_int(config.get("history_days"), 150), 270))
     spec = _effective_spec(config)
     execution = spec.get("execution", {}) or {}
     start = _parse_iso(execution.get("start"))
     end = _parse_iso(execution.get("end"))
+    history_days = max(90, _as_int(config.get("history_days"), 150))
     replay_frame = _fetch_replay_frame(
         symbol=symbol,
         interval=interval,

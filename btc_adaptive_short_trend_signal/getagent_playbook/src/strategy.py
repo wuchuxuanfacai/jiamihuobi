@@ -96,6 +96,18 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     range_vol_ceiling: float = 0.59266
     range_abs_slope_max: float = 0.025
     range_ret_slow_abs_max: float = 0.12
+    idle_start_bars: int = 18
+    idle_full_bars: int = 54
+    idle_strength_relax: float = 0.10
+    idle_vol_relax: float = 0.35
+    idle_slope_relax: float = 0.75
+    idle_ret_relax: float = 0.30
+    idle_range_z_relax: float = 0.35
+    idle_range_cap_boost: float = 0.50
+    idle_range_min_boost: float = 0.02
+    idle_carry_on: float = 0.55
+    idle_carry_z_mult: float = 0.55
+    idle_carry_cap: float = 0.035
     trend_invalidation_off: float = 0.30
     trade_start: str = ""
 
@@ -107,6 +119,7 @@ class AdaptiveShortTrendStrategy(Strategy):
         self._closes: list[float] = []
         self._instrument: Optional[Instrument] = None
         self._target_position_qty = 0.0
+        self._idle_bars = 0
         self._trade_start_ns = self._parse_timestamp_ns(config.trade_start)
 
     def on_start(self) -> None:
@@ -140,12 +153,18 @@ class AdaptiveShortTrendStrategy(Strategy):
             return
         if self._trade_start_ns and int(bar.ts_event) < self._trade_start_ns:
             return
-        target_weight = compute_signal_state(values, self._config_dict(), bars_per_day=6.0).target_weight
+        config = self._config_dict()
+        config["idle_bars"] = self._idle_bars
+        target_weight = compute_signal_state(values, config, bars_per_day=6.0).target_weight
         target_qty = self._target_qty(target_weight, latest)
         target_qty = self._clip_target_qty(target_qty, latest)
         current_qty = self._target_position_qty
         delta_qty = target_qty - current_qty
         min_qty = float(self.cfg.min_trade_size)
+        if abs(target_qty) < min_qty and abs(current_qty) < min_qty:
+            self._idle_bars += 1
+        else:
+            self._idle_bars = 0
         if abs(delta_qty) < min_qty:
             return
         if current_qty and abs(delta_qty) < abs(current_qty) * float(self.cfg.min_rebalance_qty_pct):
@@ -288,6 +307,18 @@ class AdaptiveShortTrendStrategy(Strategy):
             "range_vol_ceiling",
             "range_abs_slope_max",
             "range_ret_slow_abs_max",
+            "idle_start_bars",
+            "idle_full_bars",
+            "idle_strength_relax",
+            "idle_vol_relax",
+            "idle_slope_relax",
+            "idle_ret_relax",
+            "idle_range_z_relax",
+            "idle_range_cap_boost",
+            "idle_range_min_boost",
+            "idle_carry_on",
+            "idle_carry_z_mult",
+            "idle_carry_cap",
             "trend_invalidation_off",
         )
         return {key: getattr(self.cfg, key) for key in keys}

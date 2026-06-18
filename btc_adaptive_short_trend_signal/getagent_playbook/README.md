@@ -9,7 +9,10 @@ signed weight, then the final target is the clipped sum of those weights.
 The current default profile is deliberately trend-led: the short trend branch
 and a smaller long trend branch are the only active base components, while
 range exposure is a small fallback used only when both directional reads are
-quiet, volatility is low, and price has moved to a channel extreme.
+quiet, volatility is low, and price has moved to a channel extreme. If the
+strategy has stayed flat for a while, a small idle-pressure rule gradually
+relaxes the range threshold so capital is not left unused forever, while the
+range cap remains much smaller than the trend cap.
 
 The uploaded package uses only replayable intraday futures OHLCV bars. It does
 not read local databases, API keys, private research files, direct exchange
@@ -32,7 +35,8 @@ produce a long component, while upper-channel strength can produce a short
 component. A gently rising channel makes range longs easier and slightly
 larger; a gently falling channel does the same for range shorts. The fallback
 also requires a flat enough channel and limited slow-period momentum so it does
-not fight a developing trend.
+not fight a developing trend. After prolonged neutral readings, the fallback
+can use a very small carry-range position before a full channel extreme appears.
 
 ## Exit 平仓
 
@@ -48,8 +52,15 @@ trend and volatility features are already formed when trading begins. Orders in
 the backtest are target-position adjustments, not isolated fixed-size entries.
 Small target changes are ignored unless they are large enough to justify a
 rebalance, reducing churn and fee drag in sideways periods.
-When trend confirmation falls below the invalidation threshold, the target is
-forced back toward flat.
+When trend confirmation falls below the invalidation threshold, only the trend
+base exposure is forced back toward flat; independent range fallback exposure
+can still remain if its range conditions are valid.
+
+The historical runner requests the configured replay window in chunks so it can
+ask for more than one provider window of candles. If the GetAgent strategy card
+still displays a shorter chart, treat that as the Cloud data availability or UI
+reporting window for that run rather than proof that the package requested only
+that shorter period.
 
 ## Parameters
 

@@ -174,41 +174,66 @@ def compute_signal_state(
     range_mean_reversion = 0.0
     range_abs_slope_max = _as_float(config.get("range_abs_slope_max"), 0.025)
     range_ret_slow_abs_max = _as_float(config.get("range_ret_slow_abs_max"), 0.12)
+    idle_bars = max(0, _as_int(config.get("idle_bars"), 0))
+    idle_start_bars = max(1, _as_int(config.get("idle_start_bars"), 18))
+    idle_full_bars = max(idle_start_bars + 1, _as_int(config.get("idle_full_bars"), 54))
+    idle_pressure = _clip((idle_bars - idle_start_bars) / max(idle_full_bars - idle_start_bars, 1), 0.0, 1.0)
+    idle_strength_relax = _as_float(config.get("idle_strength_relax"), 0.10) * idle_pressure
+    idle_vol_relax = _as_float(config.get("idle_vol_relax"), 0.35) * idle_pressure
+    idle_slope_relax = _as_float(config.get("idle_slope_relax"), 0.75) * idle_pressure
+    idle_ret_relax = _as_float(config.get("idle_ret_relax"), 0.30) * idle_pressure
     trend_base_active = bool(trend_long_base or trend_short_base)
     range_ok = (
         not trend_base_active
-        and trend_strength <= _as_float(config.get("range_trend_max"), 0.62)
-        and bear_strength <= _as_float(config.get("range_bear_max"), 0.62)
-        and realized_vol <= _as_float(config.get("range_vol_ceiling"), 0.50)
-        and abs(channel_slope) <= range_abs_slope_max
-        and abs(ret_slow) <= range_ret_slow_abs_max
+        and trend_strength <= _as_float(config.get("range_trend_max"), 0.62) + idle_strength_relax
+        and bear_strength <= _as_float(config.get("range_bear_max"), 0.62) + idle_strength_relax
+        and realized_vol <= _as_float(config.get("range_vol_ceiling"), 0.50) * (1.0 + idle_vol_relax)
+        and abs(channel_slope) <= range_abs_slope_max * (1.0 + idle_slope_relax)
+        and abs(ret_slow) <= range_ret_slow_abs_max * (1.0 + idle_ret_relax)
     )
     if range_ok:
-        range_entry = max(_as_float(config.get("range_z_entry"), 0.85), 0.1)
+        range_entry = max(
+            _as_float(config.get("range_z_entry"), 0.85)
+            * (1.0 - _as_float(config.get("idle_range_z_relax"), 0.35) * idle_pressure),
+            0.35,
+        )
         slope_deadband = _as_float(config.get("channel_slope_deadband"), 0.01)
         bias_strength = _clip(_as_float(config.get("range_bias_strength"), 0.25), 0.0, 0.75)
         long_entry = range_entry * (1.0 - bias_strength if channel_slope > slope_deadband else 1.0)
         short_entry = range_entry * (1.0 - bias_strength if channel_slope < -slope_deadband else 1.0)
         long_size_mult = 1.0 + bias_strength if channel_slope > slope_deadband else 1.0
         short_size_mult = 1.0 + bias_strength if channel_slope < -slope_deadband else 1.0
-        range_cap = _as_float(config.get("range_mr_cap"), 0.25)
+        range_cap = _as_float(config.get("range_mr_cap"), 0.25) * (
+            1.0 + _as_float(config.get("idle_range_cap_boost"), 0.50) * idle_pressure
+        )
         if channel_z <= -long_entry:
             depth = _clip((abs(channel_z) - long_entry) / max(range_entry, 1e-9), 0.0, 1.0)
             range_mean_reversion = min(range_cap * long_size_mult, range_cap * (0.35 + 0.65 * depth) * long_size_mult)
         elif channel_z >= short_entry:
             depth = _clip((abs(channel_z) - short_entry) / max(range_entry, 1e-9), 0.0, 1.0)
             range_mean_reversion = -min(range_cap * short_size_mult, range_cap * (0.35 + 0.65 * depth) * short_size_mult)
+        elif idle_pressure >= _as_float(config.get("idle_carry_on"), 0.55):
+            carry_trigger = range_entry * _as_float(config.get("idle_carry_z_mult"), 0.55)
+            carry_cap = _as_float(config.get("idle_carry_cap"), 0.035) * idle_pressure
+            if channel_z <= -carry_trigger:
+                range_mean_reversion = carry_cap
+            elif channel_z >= carry_trigger:
+                range_mean_reversion = -carry_cap
         if range_mean_reversion:
-            range_floor = min(range_cap, _as_float(config.get("range_min_component"), 0.0))
+            range_floor = min(
+                range_cap,
+                _as_float(config.get("range_min_component"), 0.0)
+                + _as_float(config.get("idle_range_min_boost"), 0.02) * idle_pressure,
+            )
             if range_floor > 0.0 and abs(range_mean_reversion) < range_floor:
                 range_mean_reversion = float(np.sign(range_mean_reversion) * range_floor)
 
     raw_sum = trend_long_base + trend_long_dynamic + trend_short_base + trend_short_dynamic + range_mean_reversion
     target_weight = _clip(raw_sum * weight_scale, -max_short_weight, max_long_weight)
-    if target_weight > 0.0 and trend_strength < trend_invalidation_off:
-        target_weight = 0.0
-    elif target_weight < 0.0 and bear_strength < trend_invalidation_off:
-        target_weight = 0.0
+    if target_weight > 0.0 and (trend_long_base or trend_long_dynamic) and trend_strength < trend_invalidation_off:
+        target_weight = max(0.0, range_mean_reversion * weight_scale)
+    elif target_weight < 0.0 and (trend_short_base or trend_short_dynamic) and bear_strength < trend_invalidation_off:
+        target_weight = min(0.0, range_mean_reversion * weight_scale)
     if abs(target_weight) < _as_float(config.get("target_step_weight"), 0.02):
         target_weight = 0.0
 
@@ -269,6 +294,8 @@ def compute_signal_state(
             "raw_component_sum": raw_sum,
             "weight_scale": weight_scale,
             "target_weight": target_weight,
+            "idle_bars": int(idle_bars),
+            "idle_pressure": idle_pressure,
             "weak_momentum": bool(weak_momentum),
             "rebound_blocked": bool(rebound_blocked),
             "short_ok": bool(short_ok),

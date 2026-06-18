@@ -84,6 +84,18 @@ strategy:
     range_vol_ceiling: 0.32
     range_abs_slope_max: 0.025
     range_ret_slow_abs_max: 0.12
+    idle_start_bars: 18
+    idle_full_bars: 54
+    idle_strength_relax: 0.10
+    idle_vol_relax: 0.35
+    idle_slope_relax: 0.75
+    idle_ret_relax: 0.30
+    idle_range_z_relax: 0.35
+    idle_range_cap_boost: 0.50
+    idle_range_min_boost: 0.02
+    idle_carry_on: 0.55
+    idle_carry_z_mult: 0.55
+    idle_carry_cap: 0.035
     trend_invalidation_off: 0.30
     trade_start: "2025-03-01T00:00:00Z"
 
