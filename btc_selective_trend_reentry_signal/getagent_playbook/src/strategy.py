@@ -203,17 +203,6 @@ class AdaptiveShortTrendStrategy(Strategy):
             return value
         return float(np.floor((value + 1e-12) / step) * step)
 
-    def _current_signed_qty(self, instrument_id: InstrumentId) -> float:
-        signed = 0.0
-        for position in self.cache.positions_open(instrument_id=instrument_id):
-            quantity = float(position.quantity)
-            side = str(getattr(position, "side", "")).upper()
-            if "SHORT" in side:
-                signed -= quantity
-            else:
-                signed += quantity
-        return signed
-
     def _config_dict(self) -> dict[str, float | str]:
         keys = (
             "margin_budget",
@@ -305,4 +294,3 @@ class AdaptiveShortTrendStrategy(Strategy):
     def on_stop(self) -> None:
         if self._instrument is not None:
             self.cancel_all_orders(self._instrument.id)
-            self.close_all_positions(self._instrument.id)
