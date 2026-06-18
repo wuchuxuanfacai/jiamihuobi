@@ -32,7 +32,7 @@ strategy_config:
   history_days: 220
   aggressiveness: 1.0
   weight_scale: 1.40
-  max_effective_exposure: 0.95
+  max_effective_exposure: 1.05
   fast_trend_days: 3
   mid_trend_days: 10
   slow_trend_days: 30
@@ -80,12 +80,14 @@ strategy_config:
   channel_slope_deadband: 0.00313
   range_bias_strength: 0.54640
   channel_slope_window: 45
-  range_mr_cap: 0.12
-  range_min_component: 0.08
-  range_z_entry: 1.10
-  range_trend_max: 0.15
-  range_bear_max: 0.15
-  range_vol_ceiling: 0.45
+  range_mr_cap: 0.08
+  range_min_component: 0.04
+  range_z_entry: 1.25
+  range_trend_max: 0.43
+  range_bear_max: 0.43
+  range_vol_ceiling: 0.32
+  range_abs_slope_max: 0.025
+  range_ret_slow_abs_max: 0.12
   vol_ceiling: 0.45
   vol_floor_min: 0.20
   high_vol_floor: 0.40996
@@ -156,7 +158,7 @@ user_config_schema:
     label: "Max signal weight"
   max_effective_exposure:
     type: number
-    default: 0.95
+    default: 1.05
     min: 0.10
     max: 3.0
     label: "Max effective exposure"

@@ -172,10 +172,16 @@ def compute_signal_state(
     trend_long_dynamic = 0.0
 
     range_mean_reversion = 0.0
+    range_abs_slope_max = _as_float(config.get("range_abs_slope_max"), 0.025)
+    range_ret_slow_abs_max = _as_float(config.get("range_ret_slow_abs_max"), 0.12)
+    trend_base_active = bool(trend_long_base or trend_short_base)
     range_ok = (
-        trend_strength <= _as_float(config.get("range_trend_max"), 0.62)
+        not trend_base_active
+        and trend_strength <= _as_float(config.get("range_trend_max"), 0.62)
         and bear_strength <= _as_float(config.get("range_bear_max"), 0.62)
         and realized_vol <= _as_float(config.get("range_vol_ceiling"), 0.50)
+        and abs(channel_slope) <= range_abs_slope_max
+        and abs(ret_slow) <= range_ret_slow_abs_max
     )
     if range_ok:
         range_entry = max(_as_float(config.get("range_z_entry"), 0.85), 0.1)

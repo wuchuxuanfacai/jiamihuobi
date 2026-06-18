@@ -94,6 +94,8 @@ class AdaptiveShortTrendStrategyConfig(StrategyConfig):
     range_trend_max: float = 0.72880
     range_bear_max: float = 0.56401
     range_vol_ceiling: float = 0.59266
+    range_abs_slope_max: float = 0.025
+    range_ret_slow_abs_max: float = 0.12
     trend_invalidation_off: float = 0.30
     trade_start: str = ""
 
@@ -284,6 +286,8 @@ class AdaptiveShortTrendStrategy(Strategy):
             "range_trend_max",
             "range_bear_max",
             "range_vol_ceiling",
+            "range_abs_slope_max",
+            "range_ret_slow_abs_max",
             "trend_invalidation_off",
         )
         return {key: getattr(self.cfg, key) for key in keys}

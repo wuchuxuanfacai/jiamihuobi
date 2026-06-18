@@ -8,8 +8,8 @@ trend-short model, and a range mean-reversion model. Each sub-model produces a
 signed weight, then the final target is the clipped sum of those weights.
 The current default profile is deliberately trend-led: the short trend branch
 and a smaller long trend branch are the only active base components, while
-range exposure is effectively suppressed unless both directional reads are very
-quiet.
+range exposure is a small fallback used only when both directional reads are
+quiet, volatility is low, and price has moved to a channel extreme.
 
 The uploaded package uses only replayable intraday futures OHLCV bars. It does
 not read local databases, API keys, private research files, direct exchange
@@ -30,7 +30,9 @@ The range model is active only when neither trend side is dominant. It fades
 channel extremes with smaller flexible weights: lower-channel weakness can
 produce a long component, while upper-channel strength can produce a short
 component. A gently rising channel makes range longs easier and slightly
-larger; a gently falling channel does the same for range shorts.
+larger; a gently falling channel does the same for range shorts. The fallback
+also requires a flat enough channel and limited slow-period momentum so it does
+not fight a developing trend.
 
 ## Exit 平仓
 
