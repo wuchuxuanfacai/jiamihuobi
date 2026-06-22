@@ -31,7 +31,7 @@ class IntradayRegimeRotationStrategyConfig(StrategyConfig):
     leverage: int = 3
     min_trade_size: str = "0.001"
     target_step_weight: float = 0.03
-    max_effective_exposure: float = 2.10
+    max_effective_exposure: float = 2.32
     min_rebalance_qty_pct: float = 0.25
     htf_bars_per_decision: int = 16
     fast_window: int = 18

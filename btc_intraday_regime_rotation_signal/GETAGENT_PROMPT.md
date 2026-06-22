@@ -1,4 +1,4 @@
-# Fresh Agent Prompt
+﻿# Fresh Agent Prompt
 
 请基于这个 GitHub 仓库复现、校验并构建 GetAgent Playbook：
 
@@ -61,7 +61,7 @@ btc_intraday_regime_rotation_signal/getagent_playbook/src/strategy.py
 7. short trend base 是主要收益来源。
 8. range component 只保留极小、严格过滤的辅助分支，不用于强制每天交易。
 9. 使用 `_target_position_qty` 跟踪目标仓位，避免重复叠仓。
-10. 使用 `max_effective_exposure: 2.10` 控制杠杆后名义敞口。
+10. 使用 `max_effective_exposure: 2.32` 控制杠杆后名义敞口。
 11. 保持 `backtest_support: full`。
 12. 保持 `execution_mode: follow_trade`。
 13. 不引入 requests、ccxt、DuckDB、API key 或交易所私有 SDK。
@@ -73,7 +73,7 @@ manifest.yaml / backtest.yaml 中必须确认这些关键字段：
 timeframe: "15m"
 htf_bars_per_decision: 16
 weight_scale: 1.75
-max_effective_exposure: 2.10
+max_effective_exposure: 2.32
 max_short_weight: 1.00
 max_long_weight: 0.00
 long_floor_cap: 0.00
@@ -104,11 +104,11 @@ Validation PASSED
 已知最终 completed Cloud 证据：
 
 ```text
-run_id: pbrun-ab7a7907b919
-version_id: 64601cae-307f-43fb-9755-3bf8ac4b709c
+run_id: pbrun-c3406e0702bb
+version_id: 377dbd40-8a4b-4c50-a523-4630354db1fd
 status: completed
-account_total_return_pct: +6.416%
-account_max_drawdown_pct: -5.3294%
+account_total_return_pct: +7.0873%
+account_max_drawdown_pct: -5.8862%
 fills: 20
 positions: 10
 win_rate: 50%

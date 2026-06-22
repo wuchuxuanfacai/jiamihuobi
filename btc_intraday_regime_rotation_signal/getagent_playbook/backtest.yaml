@@ -16,7 +16,7 @@ strategy:
     leverage: 3
     min_trade_size: "0.001"
     target_step_weight: 0.06
-    max_effective_exposure: 2.10
+    max_effective_exposure: 2.32
     min_rebalance_qty_pct: 0.25
     htf_bars_per_decision: 16
     fast_window: 18

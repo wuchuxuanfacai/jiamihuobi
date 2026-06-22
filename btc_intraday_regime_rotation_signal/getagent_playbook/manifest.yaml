@@ -32,7 +32,7 @@ strategy_config:
   history_days: 180
   aggressiveness: 1.0
   weight_scale: 1.75
-  max_effective_exposure: 2.10
+  max_effective_exposure: 2.32
   htf_bars_per_decision: 16
   fast_window: 18
   mid_window: 60
@@ -132,7 +132,7 @@ user_config_schema:
     label: "Max signal weight"
   max_effective_exposure:
     type: number
-    default: 2.10
+    default: 2.32
     min: 0.10
     max: 3.0
     label: "Max effective exposure"
