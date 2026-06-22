@@ -165,7 +165,7 @@ def _effective_spec(config: dict[str, Any]) -> dict[str, Any]:
         "leverage": _as_int(config.get("leverage"), _as_int(strategy_config.get("leverage"), 3)),
         "min_trade_size": str(config.get("min_trade_size") or strategy_config.get("min_trade_size") or "0.001"),
         "target_step_weight": _as_float(config.get("target_step_weight"), strategy_config.get("target_step_weight", 0.06)),
-        "max_effective_exposure": _as_float(config.get("max_effective_exposure"), strategy_config.get("max_effective_exposure", 2.32)),
+        "max_effective_exposure": _as_float(config.get("max_effective_exposure"), strategy_config.get("max_effective_exposure", 2.36)),
         "min_rebalance_qty_pct": _as_float(config.get("min_rebalance_qty_pct"), strategy_config.get("min_rebalance_qty_pct", 0.25)),
         "htf_bars_per_decision": _as_int(config.get("htf_bars_per_decision"), _as_int(strategy_config.get("htf_bars_per_decision"), 16)),
         "fast_window": _as_int(config.get("fast_window"), _as_int(strategy_config.get("fast_window"), 18)),

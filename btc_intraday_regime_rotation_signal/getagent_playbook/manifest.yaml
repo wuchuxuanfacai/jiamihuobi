@@ -32,7 +32,7 @@ strategy_config:
   history_days: 180
   aggressiveness: 1.0
   weight_scale: 1.75
-  max_effective_exposure: 2.32
+  max_effective_exposure: 2.36
   htf_bars_per_decision: 16
   fast_window: 18
   mid_window: 60

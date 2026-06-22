@@ -22,11 +22,11 @@ feed.
 Current accepted completed GetAgent Cloud run:
 
 ```text
-run_id: pbrun-c3406e0702bb
-version_id: 377dbd40-8a4b-4c50-a523-4630354db1fd
+run_id: pbrun-f60c597831b0
+version_id: e0c92319-8fb3-47f4-b21c-d9d43f03944f
 status: completed
-account_total_return_pct: +7.0873%
-account_max_drawdown_pct: -5.8862%
+account_total_return_pct: +7.2109%
+account_max_drawdown_pct: -5.9878%
 fills: 20
 positions: 10
 win_rate: 50%
@@ -34,10 +34,10 @@ profit_factor: 2.228
 window: 2025-12-18 -> 2026-06-01
 ```
 
-An aggressive exposure test at `max_effective_exposure: 2.35` reached
-`+7.1792%` with `-5.9625%` max drawdown, but it is not the default because the
-drawdown sits too close to the 6% guardrail. The accepted profile uses
-`max_effective_exposure: 2.32` for a little more safety margin.
+The accepted profile uses `max_effective_exposure: 2.36`. Higher tests reached
+slightly more return but crossed the 6% drawdown guardrail. Higher-frequency
+15-minute and 2-hour direction variants increased trades but reduced quality
+after fees, so they are not retained as the default.
 
 GetAgent also reports strategy-basis fields using `margin_budget` as the
 denominator. For comparing trading quality, use the account-level return,
