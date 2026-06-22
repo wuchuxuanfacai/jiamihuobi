@@ -1,0 +1,134 @@
+name: btc-volatility-breakout-reversal-signal
+display_name: "BTC Volatility Breakout Reversal Signal"
+version: "0.1.0"
+description: "BTC contract strategy combining volatility breakout, trend regime, and pullback reversal signals"
+long_description: |
+  This Playbook trades BTC perpetual futures with a regime-aware approach that captures two different behaviors: directional breakouts after price compresses and controlled pullbacks inside an existing trend. The thesis is that BTC alternates between quiet preparation phases and fast directional releases, while some of the best entries occur when price briefly moves against the larger trend before momentum resumes. The strategy is designed to trade both long and short, with risk scaled by volatility and exposure capped at the portfolio level.
+
+  Entry decisions combine price action, moving trend structure, channel location, volatility behavior, and recent momentum. It can open long when upside structure is aligned and price confirms a breakout, or when a rising regime experiences a contained pullback. It can open short when downside structure is aligned and price confirms a breakdown, or when a falling regime experiences a contained rebound. The model avoids treating every intraday move as a signal; it waits for regime evidence and a clean trigger.
+
+  Exits are handled through target position changes. When the breakout loses momentum, the larger trend weakens, volatility expands in a way that makes sizing unattractive, or the pullback no longer looks constructive, the strategy reduces exposure or returns to flat. It does not rely on a single fixed take profit or stop label; instead, the desired position is recalculated as market structure changes.
+
+  Subscribers can tune leverage, margin budget, signal aggressiveness, exposure caps, volatility settings, and directional limits. Higher leverage amplifies both gains and drawdowns without improving signal quality. A larger margin budget increases the notional capital used for sizing and return interpretation. More aggressive settings may increase trade frequency and earlier entries, while more defensive settings reduce activity and can miss fast moves.
+
+  The main risks are false breakouts, sudden news reversals, range-bound markets that repeatedly trigger and fail, and execution costs that exceed replay assumptions. The strategy can underperform when BTC chops without follow-through or when a strong trend reverses abruptly after entry. Historical backtest performance is not a guarantee of live profitability, and users should match the strategy to their own risk tolerance.
+market_type: contract
+trading_symbols: ["BTCUSDT"]
+tags: ["btc", "contract", "breakout", "volatility", "reversal"]
+schedule:
+  cron: "*/15 * * * *"
+  tz: "Asia/Shanghai"
+decision_mode: deterministic
+backtest_support: full
+runtime_profile: deterministic
+execution_mode: follow_trade
+follow_trade_supported: true
+
+strategy_config:
+  trading_symbols: ["BTCUSDT"]
+  leverage: 3
+  margin_budget: "50000"
+  timeframe: "15m"
+  history_days: 180
+  decision_interval_minutes: 240
+  target_step_weight: 0.05
+  max_effective_exposure: 3.20
+  min_rebalance_qty_pct: 0.25
+  squeeze_window: 96
+  stretch_window: 32
+  trend_window: 384
+  vol_window: 96
+  overheat_z: 1.65
+  overheat_ret_min: 0.035
+  near_high_mult: 0.995
+  vol_ceiling: 0.95
+  turn_fast_ret_max: -0.004
+  fade_from_high_mult: 0.985
+  vol_expansion_min: 1.08
+  trend_block_ret: 0.22
+  washout_z: 1.85
+  washout_ret_max: 0.045
+  near_low_mult: 1.005
+  long_vol_ceiling: 0.90
+  turn_fast_ret_min: 0.004
+  bounce_from_low_mult: 1.015
+  short_target_vol: 0.42
+  long_target_vol: 0.18
+  max_signal_weight: 1.00
+  max_short_weight: 1.00
+  max_long_weight: 0.12
+  weight_scale: 2.00
+  vol_floor_min: 0.20
+  min_trade_size: "0.001"
+  cloud_fetch_start: "2025-12-18T00:00:00Z"
+  cloud_trade_start: "2025-12-18T00:00:00Z"
+  cloud_fetch_end: "2026-06-01T00:00:00Z"
+
+user_config_schema:
+  trading_symbols:
+    type: array
+    item_type: string
+    default: ["BTCUSDT"]
+    options: ["BTCUSDT"]
+    aliases:
+      btc: BTCUSDT
+      bitcoin: BTCUSDT
+    min_items: 1
+    max_items: 1
+    label: "Trading symbol"
+  leverage:
+    type: integer
+    default: 3
+    min: 1
+    max: 10
+    aliases:
+      3x: 3
+      5x: 5
+      10x: 10
+    label: "Leverage"
+  margin_budget:
+    type: string
+    default: "50000"
+    pattern: "^[0-9]+(\\.[0-9]+)?$"
+    label: "Margin budget USDT"
+  timeframe:
+    type: string
+    default: "15m"
+    options: ["15m"]
+    label: "Execution timeframe"
+  weight_scale:
+    type: number
+    default: 2.00
+    min: 0.5
+    max: 2.0
+    label: "Weight scale"
+  max_effective_exposure:
+    type: number
+    default: 3.20
+    min: 0.10
+    max: 3.0
+    label: "Max effective exposure"
+  max_short_weight:
+    type: number
+    default: 0.85
+    min: 0.0
+    max: 2.0
+    label: "Max short weight"
+  max_long_weight:
+    type: number
+    default: 0.55
+    min: 0.0
+    max: 2.0
+    label: "Max long weight"
+  trend_on:
+    type: number
+    default: 0.72
+    min: 0.3
+    max: 1.0
+    label: "Long trend threshold"
+  bear_on:
+    type: number
+    default: 0.70
+    min: 0.3
+    max: 1.0
+    label: "Short trend threshold"
