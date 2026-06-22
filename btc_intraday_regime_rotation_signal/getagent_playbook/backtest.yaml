@@ -1,0 +1,82 @@
+venue:
+  name: BINANCE
+  account_type: MARGIN
+  oms_type: NETTING
+  starting_balances:
+    - amount: 100000
+      currency: USDT
+
+strategy:
+  module: strategy
+  class: IntradayRegimeRotationStrategy
+  config_class: IntradayRegimeRotationStrategyConfig
+  config:
+    order_id_tag: "001"
+    margin_budget: "50000"
+    leverage: 3
+    min_trade_size: "0.001"
+    target_step_weight: 0.06
+    max_effective_exposure: 2.10
+    min_rebalance_qty_pct: 0.25
+    htf_bars_per_decision: 16
+    fast_window: 18
+    mid_window: 60
+    slow_window: 180
+    long_window: 540
+    vol_window: 60
+    bear_on: 0.56
+    bear_off: 0.50
+    ret_slow_max: -0.08
+    ret_mid_max: -0.04
+    short_sma_mult: 0.98
+    mid_sma_mult: 1.0
+    rebound_ret_max: 0.08
+    rebound_sma_mult: 1.005
+    short_target_vol: 0.35
+    short_floor_cap: 1.00
+    max_short_weight: 1.00
+    max_signal_weight: 1.00
+    short_base: 0.65
+    short_conf: 0.55
+    weight_scale: 1.75
+    vol_ceiling: 0.45
+    vol_floor_min: 0.20
+    long_on: 0.68
+    long_ret_mid_min: 0.0
+    long_sma_mult: 1.02
+    long_vol_ceiling: 0.45
+    long_floor_cap: 0.00
+    max_long_weight: 0.00
+    channel_slope_deadband: 0.00313
+    range_bias_strength: 0.54640
+    channel_slope_window: 45
+    range_mr_cap: 0.02
+    range_min_component: 0.00
+    range_z_entry: 1.50
+    range_trend_max: 0.30
+    range_bear_max: 0.30
+    range_vol_ceiling: 0.28
+    range_abs_slope_max: 0.012
+    range_ret_slow_abs_max: 0.08
+    trend_invalidation_off: 0.30
+    trade_start: "2025-12-18T00:00:00Z"
+
+execution:
+  start: "2025-12-18T00:00:00Z"
+  end: "2026-06-01T00:00:00Z"
+
+instrument:
+  id: BTCUSDT.BINANCE
+  kind: perpetual
+  raw_symbol: BTCUSDT
+  base_currency: BTC
+  quote_currency: USDT
+  settlement_currency: USDT
+  price_precision: 2
+  size_precision: 3
+  price_increment: "0.01"
+  size_increment: "0.001"
+  lot_size: "0.001"
+  maker_fee: "0.0002"
+  taker_fee: "0.0005"
+  bar_type: BTCUSDT.BINANCE-15-MINUTE-LAST-EXTERNAL

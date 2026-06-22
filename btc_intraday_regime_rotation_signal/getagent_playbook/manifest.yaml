@@ -1,0 +1,186 @@
+name: btc-intraday-regime-rotation-signal
+display_name: "BTC HTF Direction 15m Execution Signal"
+version: "0.1.0"
+description: "BTC contract strategy using a higher-timeframe trend model with 15-minute execution bars"
+long_description: |
+  This Playbook is a selective BTC perpetual futures strategy that uses intraday bars as the execution feed while making its main directional decision from a slower aggregated trend view. Its thesis is that BTC often produces the best risk-adjusted trades after a larger directional structure is already visible, while many short intraday fluctuations are too noisy after fees. The strategy can trade both long and short, but it is deliberately more willing to express downside trend exposure and only keeps small long exposure when recovery structure is clean.
+
+  Entry decisions combine price action, trend alignment, momentum persistence, rebound behavior, channel location, and realized volatility. The strategy opens short when downside alignment and weak momentum are confirmed while rebound pressure remains contained. It opens long only when upside recovery alignment is strong enough to support a defensive allocation. A small range component may appear only when neither side dominates and volatility remains contained.
+
+  Exits are driven by target-weight reduction rather than fixed prediction labels. When the directional read weakens, when a rebound damages the short setup, when upside alignment fades, or when volatility makes sizing unattractive, the target moves back toward flat. This makes the strategy step exposure down as regime quality decays instead of waiting for a full opposite signal.
+
+  Subscribers can tune leverage, margin budget, aggressiveness, exposure caps, range exposure, and volatility controls. Higher leverage amplifies both gains and drawdowns without improving signal accuracy. A larger margin budget increases the capital base used for sizing and return interpretation. More aggressive settings can make the model act earlier, while more defensive settings reduce trade frequency and may miss some trends.
+
+  The main risks are sharp reversals, news-driven gaps, choppy conditions where trend signals form and then quickly fail, and execution costs that exceed replay assumptions. The strategy can lose money when BTC rebounds strongly after bearish entries or when the market repeatedly changes direction without follow-through. Historical backtest performance is not a guarantee of live profitability.
+market_type: contract
+trading_symbols: ["BTCUSDT"]
+tags: ["btc", "contract", "intraday", "trend", "reentry"]
+schedule:
+  cron: "*/15 * * * *"
+  tz: "Asia/Shanghai"
+decision_mode: deterministic
+backtest_support: full
+runtime_profile: deterministic
+execution_mode: follow_trade
+follow_trade_supported: true
+
+strategy_config:
+  trading_symbols: ["BTCUSDT"]
+  leverage: 3
+  margin_budget: "50000"
+  timeframe: "15m"
+  history_days: 180
+  aggressiveness: 1.0
+  weight_scale: 1.75
+  max_effective_exposure: 2.10
+  htf_bars_per_decision: 16
+  fast_window: 18
+  mid_window: 60
+  slow_window: 180
+  long_window: 540
+  vol_window: 60
+  bear_on: 0.56
+  bear_off: 0.50
+  ret_slow_max: -0.08
+  ret_mid_max: -0.04
+  short_sma_mult: 0.98
+  mid_sma_mult: 1.0
+  rebound_ret_max: 0.08
+  rebound_sma_mult: 1.005
+  short_target_vol: 0.35
+  short_floor_cap: 1.00
+  short_base: 0.65
+  short_conf: 0.55
+  max_short_weight: 1.00
+  max_signal_weight: 1.00
+  long_sma_mult: 1.02
+  long_floor_cap: 0.00
+  max_long_weight: 0.00
+  long_on: 0.68
+  long_ret_mid_min: 0.0
+  long_vol_ceiling: 0.45
+  channel_slope_deadband: 0.00313
+  range_bias_strength: 0.54640
+  channel_slope_window: 45
+  range_mr_cap: 0.02
+  range_min_component: 0.00
+  range_z_entry: 1.50
+  range_trend_max: 0.30
+  range_bear_max: 0.30
+  range_vol_ceiling: 0.28
+  range_abs_slope_max: 0.012
+  range_ret_slow_abs_max: 0.08
+  vol_ceiling: 0.45
+  vol_floor_min: 0.20
+  target_step_weight: 0.06
+  min_rebalance_qty_pct: 0.25
+  trend_invalidation_off: 0.30
+  min_trade_size: "0.001"
+  cloud_fetch_start: "2025-12-18T00:00:00Z"
+  cloud_trade_start: "2025-12-18T00:00:00Z"
+  cloud_fetch_end: "2026-06-01T00:00:00Z"
+
+user_config_schema:
+  trading_symbols:
+    type: array
+    item_type: string
+    default: ["BTCUSDT"]
+    options: ["BTCUSDT"]
+    aliases:
+      btc: BTCUSDT
+      bitcoin: BTCUSDT
+    min_items: 1
+    max_items: 1
+    label: "Trading symbol"
+  leverage:
+    type: integer
+    default: 3
+    min: 1
+    max: 10
+    aliases:
+      3x: 3
+      5x: 5
+      10x: 10
+    label: "Leverage"
+  margin_budget:
+    type: string
+    default: "50000"
+    pattern: "^[0-9]+(\\.[0-9]+)?$"
+    label: "Margin budget USDT"
+  timeframe:
+    type: string
+    default: "15m"
+    options: ["15m"]
+    label: "Execution timeframe"
+  aggressiveness:
+    type: number
+    default: 1.0
+    min: 0.5
+    max: 1.5
+    label: "Signal aggressiveness"
+  weight_scale:
+    type: number
+    default: 1.75
+    min: 0.5
+    max: 2.0
+    label: "Weight scale"
+  max_signal_weight:
+    type: number
+    default: 1.00
+    min: 0.01
+    max: 2.0
+    label: "Max signal weight"
+  max_effective_exposure:
+    type: number
+    default: 2.10
+    min: 0.10
+    max: 3.0
+    label: "Max effective exposure"
+  max_short_weight:
+    type: number
+    default: 1.00
+    min: 0.0
+    max: 2.0
+    label: "Max short weight"
+  max_long_weight:
+    type: number
+    default: 0.00
+    min: 0.0
+    max: 1.0
+    label: "Max long weight"
+  bear_on:
+    type: number
+    default: 0.56
+    min: 0.3
+    max: 0.9
+    label: "Bear trend threshold"
+  short_floor_cap:
+    type: number
+    default: 1.00
+    min: 0.0
+    max: 2.0
+    label: "Short floor cap"
+  short_target_vol:
+    type: number
+    default: 0.35
+    min: 0.01
+    max: 1.2
+    label: "Short target volatility"
+  long_floor_cap:
+    type: number
+    default: 0.00
+    min: 0.0
+    max: 1.0
+    label: "Long floor cap"
+  range_mr_cap:
+    type: number
+    default: 0.02
+    min: 0.0
+    max: 1.0
+    label: "Range exposure cap"
+  vol_ceiling:
+    type: number
+    default: 0.45
+    min: 0.1
+    max: 9.0
+    label: "Volatility ceiling"
