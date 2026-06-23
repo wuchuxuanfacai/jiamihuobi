@@ -86,7 +86,18 @@ def _sanitize_ohlcv_frame(frame: pd.DataFrame) -> pd.DataFrame:
         refs = frame.loc[bad, ["open", "high", "low", "close"]].astype(float)
         frame.loc[bad, "high"] = refs.max(axis=1)
         frame.loc[bad, "low"] = refs.min(axis=1)
-    return frame
+    cols = ["open", "high", "low", "close", "volume"]
+    for col in cols:
+        if col not in frame.columns:
+            frame[col] = 0.0 if col == "volume" else float("nan")
+    frame = frame[cols].dropna(subset=["open", "high", "low", "close"]).copy()
+    refs = frame[["open", "high", "low", "close"]].astype(float)
+    frame["high"] = refs.max(axis=1).round(2)
+    frame["low"] = refs.min(axis=1).round(2)
+    frame["open"] = refs["open"].clip(lower=frame["low"], upper=frame["high"]).round(2)
+    frame["close"] = refs["close"].clip(lower=frame["low"], upper=frame["high"]).round(2)
+    frame["volume"] = pd.to_numeric(frame["volume"], errors="coerce").clip(lower=0.0).fillna(0.0)
+    return frame[cols]
 
 
 def _fetch_replay_frame(symbol: str, interval: str, start: datetime | None, end: datetime | None, history_days: int) -> pd.DataFrame:
