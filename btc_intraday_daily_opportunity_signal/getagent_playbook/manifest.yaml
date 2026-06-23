@@ -1,0 +1,147 @@
+name: btc-intraday-daily-opportunity-signal
+display_name: "BTC Intraday Daily Opportunity Signal"
+version: "0.1.0"
+description: "BTC contract strategy combining a higher-timeframe trend core with a small intraday opportunity overlay"
+long_description: |
+  This Playbook trades BTC perpetual futures with a hybrid thesis. The core component tries to capture sustained directional moves when the broader structure points clearly to one side. A smaller intraday overlay looks for recurring opportunity after price stretches away from its short-term fair value, so the strategy can participate more often without turning the whole system into a noisy scalper. It can trade both long and short, but its largest exposure is reserved for cleaner trend conditions while the intraday layer is intentionally small.
+
+  Entry decisions are split between the two layers. The trend core opens short when downside structure, weak momentum, and controlled volatility align. It opens long only when recovery behavior is strong enough to justify a defensive allocation. The intraday overlay becomes active only when the core trend position is flat or small, then looks for price action that has moved too far from local value and starts to mean-revert.
+
+  Exits are handled through target-position changes. When trend quality fades, rebound behavior damages the short setup, or volatility becomes unattractive, the core target moves back toward flat. The overlay is time-limited and closes quickly if the short-term opportunity expires. Opposite signals reduce or reverse the target instead of stacking unmanaged positions.
+
+  Subscribers can tune leverage, margin budget, overall exposure, trend aggressiveness, and overlay size. Higher leverage amplifies both gains and drawdowns. A larger margin budget increases the capital base used for sizing and displayed return. Raising overlay size increases trade frequency but also increases fee drag and whipsaw risk. Lowering exposure makes the system quieter and may miss daily opportunities.
+
+  The main risks are rapid reversals, choppy markets that repeatedly trigger small overlay trades, news gaps, funding-rate changes, and execution costs that exceed replay assumptions. This strategy can underperform when BTC moves in a narrow but noisy range or when intraday mean reversion fails repeatedly. Historical backtest performance is not a guarantee of live profitability.
+market_type: contract
+trading_symbols: ["BTCUSDT"]
+tags: ["btc", "contract", "intraday", "trend", "mean-reversion"]
+schedule:
+  cron: "*/15 * * * *"
+  tz: "Asia/Shanghai"
+decision_mode: deterministic
+backtest_support: full
+runtime_profile: deterministic
+execution_mode: follow_trade
+follow_trade_supported: true
+
+strategy_config:
+  trading_symbols: ["BTCUSDT"]
+  leverage: 3
+  margin_budget: "50000"
+  timeframe: "15m"
+  history_days: 180
+  weight_scale: 1.75
+  max_effective_exposure: 2.25
+  fast_window: 18
+  mid_window: 60
+  slow_window: 180
+  long_window: 540
+  vol_window: 60
+  bear_on: 0.56
+  ret_slow_max: -0.08
+  ret_mid_max: -0.04
+  short_sma_mult: 0.98
+  mid_sma_mult: 1.0
+  rebound_ret_max: 0.08
+  rebound_sma_mult: 1.005
+  short_target_vol: 0.35
+  short_floor_cap: 1.00
+  short_base: 0.65
+  short_conf: 0.55
+  max_short_weight: 1.00
+  max_signal_weight: 1.00
+  max_long_weight: 0.20
+  long_on: 0.68
+  long_ret_mid_min: 0.0
+  long_sma_mult: 1.02
+  long_vol_ceiling: 0.45
+  long_floor_cap: 0.00
+  channel_slope_window: 45
+  range_z_entry: 1.50
+  range_mr_cap: 0.02
+  range_trend_max: 0.30
+  range_bear_max: 0.30
+  range_vol_ceiling: 0.28
+  range_abs_slope_max: 0.012
+  range_ret_slow_abs_max: 0.08
+  vol_ceiling: 0.45
+  vol_floor_min: 0.20
+  target_step_weight: 0.02
+  min_rebalance_qty_pct: 0.10
+  trend_invalidation_off: 0.30
+  overlay_cap: 0.025
+  overlay_z_entry: 0.70
+  overlay_base_gate: 0.04
+  overlay_max_hold_1h: 4
+  overlay_vwap_window: 48
+  overlay_atr_window: 24
+  overlay_rsi_window: 7
+  overlay_flow_window: 4
+  overlay_vol_window: 16
+  overlay_rank_window: 192
+  overlay_rsi_low: 44.0
+  overlay_rsi_high: 52.0
+  overlay_flow_gate: 0.03
+  overlay_vol_rank_max: 0.85
+  min_trade_size: "0.001"
+  cloud_fetch_start: "2025-12-01T00:00:00Z"
+  cloud_trade_start: "2025-12-18T00:00:00Z"
+  cloud_fetch_end: "2026-06-01T00:00:00Z"
+
+user_config_schema:
+  trading_symbols:
+    type: array
+    item_type: string
+    default: ["BTCUSDT"]
+    options: ["BTCUSDT"]
+    aliases:
+      btc: BTCUSDT
+      bitcoin: BTCUSDT
+    min_items: 1
+    max_items: 1
+    label: "Trading symbol"
+  leverage:
+    type: integer
+    default: 3
+    min: 1
+    max: 10
+    aliases:
+      3x: 3
+      5x: 5
+      10x: 10
+    label: "Leverage"
+  margin_budget:
+    type: string
+    default: "50000"
+    pattern: "^[0-9]+(\\.[0-9]+)?$"
+    label: "Margin budget USDT"
+  weight_scale:
+    type: number
+    default: 1.75
+    min: 0.5
+    max: 2.0
+    label: "Trend weight scale"
+  max_effective_exposure:
+    type: number
+    default: 2.25
+    min: 0.10
+    max: 3.0
+    label: "Max effective exposure"
+  overlay_cap:
+    type: number
+    default: 0.025
+    min: 0.0
+    max: 0.2
+    label: "Intraday overlay size"
+  overlay_z_entry:
+    type: number
+    default: 0.70
+    min: 0.10
+    max: 3.0
+    label: "Intraday overlay trigger"
+  overlay_max_hold_1h:
+    type: integer
+    default: 4
+    min: 1
+    max: 12
+    label: "Overlay max hold"
