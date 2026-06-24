@@ -23,6 +23,12 @@ backtest_support: full
 runtime_profile: deterministic
 execution_mode: follow_trade
 follow_trade_supported: true
+paper_entry:
+  runtime: python
+  command: "python -m src.main"
+  module: "src.main"
+  function: "run"
+  entrypoint: "src.main:run"
 
 strategy_config:
   trading_symbols: ["BTCUSDT"]
