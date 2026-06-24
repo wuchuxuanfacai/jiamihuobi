@@ -12,11 +12,11 @@ strategy:
   config_class: AdaptiveShortTrendStrategyConfig
   config:
     order_id_tag: "001"
-    margin_budget: "50000"
+    margin_budget: "1000"
     leverage: 3
     min_trade_size: "0.001"
     target_step_weight: 0.06
-    max_effective_exposure: 1.05
+    max_effective_exposure: 1.60
     min_rebalance_qty_pct: 0.25
     fast_window: 18
     mid_window: 60
@@ -32,33 +32,33 @@ strategy:
     rebound_ret_max: 0.08
     rebound_sma_mult: 1.005
     short_target_vol: 0.35
-    short_floor_cap: 1.00
-    max_short_weight: 1.00
-    max_signal_weight: 1.00
+    short_floor_cap: 1.60
+    max_short_weight: 1.60
+    max_signal_weight: 1.60
     short_base: 0.65
     short_conf: 0.55
     weight_scale: 1.40
-    vol_ceiling: 0.45
+    vol_ceiling: 0.35
     vol_floor_min: 0.20
     high_vol_floor: 0.40996
     high_vol_ceiling: 0.54369
-    high_vol_bear_on: 0.56
-    high_vol_sma_mult: 0.98
+    high_vol_bear_on: 0.42
+    high_vol_sma_mult: 1.02
     high_vol_target_vol: 0.50
-    high_vol_short_cap: 0.20
-    high_vol_short_base: 0.35
+    high_vol_short_cap: 1.00
+    high_vol_short_base: 0.65
     high_vol_short_conf: 0.0
     long_on: 0.57
     long_ret_mid_min: 0.005
     long_sma_mult: 1.02
-    long_vol_ceiling: 0.45
-    long_floor_cap: 0.30
-    max_long_weight: 0.30
-    dynamic_long_cap: 0.03
-    dynamic_short_cap: 0.03
+    long_vol_ceiling: 0.35
+    long_floor_cap: 0.00
+    max_long_weight: 0.00
+    dynamic_long_cap: 0.00
+    dynamic_short_cap: 0.00
     dynamic_long_trend_on: 0.68
     dynamic_long_sma_mult: 1.02
-    dynamic_long_vol_ceiling: 0.45
+    dynamic_long_vol_ceiling: 0.35
     long_accel_ret_min: 0.02445
     long_pullback_z: -0.37573
     long_pullback_ret_mid_min: -0.02667
@@ -76,8 +76,8 @@ strategy:
     channel_slope_deadband: 0.00313
     range_bias_strength: 0.54640
     channel_slope_window: 45
-    range_mr_cap: 0.08
-    range_min_component: 0.04
+    range_mr_cap: 0.00
+    range_min_component: 0.00
     range_z_entry: 1.25
     range_trend_max: 0.43
     range_bear_max: 0.43
@@ -97,10 +97,10 @@ strategy:
     idle_carry_z_mult: 0.55
     idle_carry_cap: 0.035
     trend_invalidation_off: 0.30
-    trade_start: "2025-03-01T00:00:00Z"
+    trade_start: "2026-03-03T00:00:00Z"
 
 execution:
-  start: "2025-01-01T00:00:00Z"
+  start: "2025-12-20T00:00:00Z"
   end: "2026-06-01T00:00:00Z"
 
 instrument:
@@ -118,3 +118,5 @@ instrument:
   maker_fee: "0.0002"
   taker_fee: "0.0005"
   bar_type: BTCUSDT.BINANCE-4-HOUR-LAST-EXTERNAL
+
+

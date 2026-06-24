@@ -73,9 +73,9 @@ def build_decision(frame: pd.DataFrame, config: dict[str, Any]) -> Decision:
     meta = {
         "regime": state.regime,
         "timeframe": interval,
-        "source": "btc-adaptive-trend-range-composite",
+        "source": "btc-adaptive-short-trend-signal",
         "latest_bar_time": str(frame.index[-1]),
-        "notes": "BTC futures composite target-weight model: long trend, short trend, and range mean-reversion components are summed before clipping.",
+        "notes": "BTC futures short-or-flat target-weight model with low-volatility and high-volatility bearish branches.",
     }
     return Decision(
         action=state.action,

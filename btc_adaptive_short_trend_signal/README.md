@@ -1,85 +1,81 @@
-# BTC Adaptive Trend Range Signal Repro Pack
+# BTC Adaptive Short Trend Signal
 
-This folder contains a public BTCUSDT perpetual futures strategy package for
-GetAgent. The current package is a composite target-position strategy. It
-combines a trend-long model, a trend-short model, and a range mean-reversion
-model, then clips the summed target weight.
+This folder is the public submission package for the Bitget Trading Agent
+track. It contains only the current BTC Adaptive Short Trend Signal materials:
+the GetAgent Playbook source, the official GetAgent Studio strategy link, and a
+public execution/backtest evidence summary.
 
-## What Is Included
+## Submission Links
 
-- `getagent_playbook/` is the GetAgent package with deterministic Cloud
-  backtest support and managed follow-trade compatibility.
-- `research_snapshot/` contains frozen local candidate-selection evidence from
-  an earlier research run.
-- `scripts/reproduce_metrics.py` verifies that the frozen research snapshot is
-  still reproducible.
+- GetAgent Studio strategy:
+  https://getagent.studio/strategy/2f355b4e-42ae-48d0-8633-a7ccf8fb433d
+- Strategy package:
+  `getagent_playbook/`
+- Paper / Cloud execution evidence:
+  [`PAPER_TRADING_LOG.md`](./PAPER_TRADING_LOG.md)
 
-No API keys, private DuckDB databases, local raw data, or Bitget credentials are
-included.
+## Idea
 
-## Current Strategy
+BTC Adaptive Short Trend Signal is a BTCUSDT perpetual futures Trading Agent
+built for a short-or-flat regime. The strategy only uses flat or short target exposure and avoids repeated constant-size entries. Instead, every four-hour bar is
+converted into a target short weight, then the target weight is translated into
+BTC quantity from the configured margin budget, current BTC price, leverage,
+and minimum order size.
 
-The uploaded package uses replayable intraday futures bars. Its trend-long
-component can hold a long base and add a dynamic long weight during acceleration
-or constructive pullback conditions. Its trend-short component can hold a short
-base and add dynamic short weight during breakdown or rebound-failure
-conditions. Its range component is only active when neither side has a dominant
-trend; it fades channel extremes with smaller flexible weights and adjusts the
-long/short bias for gently rising or falling channels.
+The core thesis is that BTC downside moves have two different risk profiles.
+In cleaner low-volatility bearish regimes, trend continuation can be traded
+with a larger short target. In high-volatility bearish regimes, staying fully
+flat can miss important selloffs, but full-size short exposure can create
+unstable drawdown. The final version therefore uses two branches:
 
-The Cloud path trades target-position adjustments rather than isolated fixed
-entry signals. It fetches pre-roll history before the declared trading window so
-trend, channel, and volatility features are already formed at the first traded
-bar.
+1. Low-volatility strong bearish branch: carries the main short exposure when
+   downside structure, weak momentum, price location, rebound filtering, and
+   realized volatility all confirm.
+2. High-volatility small short branch: participates with reduced size when the
+   market is volatile but bearish structure is still valid.
 
-## Reproduce The Frozen Metrics
+## Signals
 
-From this directory:
+The agent uses replayable BTCUSDT futures OHLCV data through GetAgent. The
+decision logic combines:
 
-```bash
-python -m pip install -r requirements.txt
-python scripts/reproduce_metrics.py
-```
+- bearish regime alignment
+- medium and short-term momentum
+- long-cycle price position
+- rebound filtering
+- realized volatility regime
 
-The script reads:
+The output is a target position, not an isolated entry signal. The strategy
+then adjusts toward that target using exchange lot-size rounding.
 
-```text
-research_snapshot/selected_candidate_grid.csv
-```
+## Risk Management
 
-and writes:
+Risk is controlled by keeping the system short-or-flat, capping maximum short
+weight, shrinking exposure in high-volatility regimes, ignoring target changes
+below the minimum useful rebalance size, and using GetAgent Cloud's declared
+maker/taker fee assumptions. The strategy is still exposed to sharp BTC
+rebounds, news gaps, funding-rate changes, slippage, and live execution
+differences.
 
-```text
-research_snapshot/reproduced_metrics.json
-```
+## Official Cloud Evidence
 
-Expected frozen selected row:
+The official GetAgent Studio card reports:
 
-| Split | Annual Return | Total Return | Sharpe | Max Drawdown |
-|---|---:|---:|---:|---:|
-| validation | 20.03% | 18.18% | 1.57 | -4.66% |
-| locked_test | 88.38% | 25.52% | 3.75 | -3.01% |
-| train | 0.54% | 2.74% | 0.12 | -7.89% |
+| Metric | Value |
+|---|---:|
+| Total Return | +10.15% |
+| Max Drawdown | -5.88% |
+| Sharpe | 1.49 |
+| Fills | 38 |
+| Positions | 6 |
+| Pair | BTCUSDT perpetual |
+| Window | 2026-03-03 to 2026-06-01 |
 
-The selected frozen candidate is `source_rank=1`, `weight_scale=1.40`,
-`timeframe=4h`. This snapshot is local research evidence, not official GetAgent
-Cloud proof for the current composite package.
+These are platform Cloud results from GetAgent Studio. The GetAgent
+Studio card is the primary source for the official execution history and
+strategy card display.
 
-## GetAgent Package
-
-```text
-name: btc-adaptive-short-trend-signal
-display_name: BTC Adaptive Trend Range Signal
-backtest_support: full
-execution_mode: follow_trade
-```
-
-The package includes `backtest.yaml` and a Nautilus strategy class so GetAgent
-Cloud can run historical validation. Cloud results may differ from local
-research because they use the platform K-line provider, the platform replay
-engine, venue assumptions, and minimum-lot rounding.
-
-## Files
+## Contents
 
 ```text
 getagent_playbook/
@@ -91,11 +87,7 @@ getagent_playbook/
   src/strategy.py
   src/decision_logic.py
 
-research_snapshot/
-  selected_candidate_grid.csv
-  candidate_hits.json
-  reproduced_metrics.json
-
-scripts/
-  reproduce_metrics.py
+PAPER_TRADING_LOG.md
 ```
+
+This submission folder contains only the current GetAgent Playbook, public strategy documentation, and Cloud evidence summary.

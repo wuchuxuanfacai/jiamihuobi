@@ -146,7 +146,35 @@ def compute_signal_state(
         else 0.0
     )
 
-    high_vol_short_ok = False
+    high_vol_short_ok = (
+        max_short_weight > 0.0
+        and not short_ok
+        and realized_vol >= _as_float(config.get("high_vol_floor"), 0.40)
+        and realized_vol <= _as_float(config.get("high_vol_ceiling"), 0.55)
+        and bear_strength >= _as_float(config.get("high_vol_bear_on"), 0.42)
+        and weak_momentum
+        and latest < sma_long * _as_float(config.get("high_vol_sma_mult"), 1.02)
+        and latest < sma_slow
+        and not rebound_blocked
+    )
+    high_vol_conf = _clip(
+        (bear_strength - _as_float(config.get("high_vol_bear_on"), 0.42))
+        / max(1.0 - _as_float(config.get("high_vol_bear_on"), 0.42), 1e-9),
+        0.0,
+        1.0,
+    )
+    high_vol_short_base = (
+        -min(
+            _as_float(config.get("high_vol_short_cap"), 1.0),
+            (_as_float(config.get("high_vol_target_vol"), 0.50) / safe_vol)
+            * (
+                _as_float(config.get("high_vol_short_base"), 0.65)
+                + _as_float(config.get("high_vol_short_conf"), 0.0) * high_vol_conf
+            ),
+        )
+        if high_vol_short_ok
+        else 0.0
+    )
     breakdown_ok = False
     upthrust_ok = False
     trend_short_dynamic = 0.0
@@ -228,7 +256,14 @@ def compute_signal_state(
             if range_floor > 0.0 and abs(range_mean_reversion) < range_floor:
                 range_mean_reversion = float(np.sign(range_mean_reversion) * range_floor)
 
-    raw_sum = trend_long_base + trend_long_dynamic + trend_short_base + trend_short_dynamic + range_mean_reversion
+    raw_sum = (
+        trend_long_base
+        + trend_long_dynamic
+        + trend_short_base
+        + high_vol_short_base
+        + trend_short_dynamic
+        + range_mean_reversion
+    )
     target_weight = _clip(raw_sum * weight_scale, -max_short_weight, max_long_weight)
     if target_weight > 0.0 and (trend_long_base or trend_long_dynamic) and trend_strength < trend_invalidation_off:
         target_weight = max(0.0, range_mean_reversion * weight_scale)
@@ -254,6 +289,8 @@ def compute_signal_state(
         active.append("long_dynamic")
     if trend_short_base:
         active.append("short_base")
+    if high_vol_short_base:
+        active.append("high_vol_short")
     if trend_short_dynamic:
         active.append("short_dynamic")
     if range_mean_reversion:
@@ -289,6 +326,7 @@ def compute_signal_state(
             "trend_long_base": trend_long_base,
             "trend_long_dynamic": trend_long_dynamic,
             "trend_short_base": trend_short_base,
+            "high_vol_short_base": high_vol_short_base,
             "trend_short_dynamic": trend_short_dynamic,
             "range_mean_reversion": range_mean_reversion,
             "raw_component_sum": raw_sum,
